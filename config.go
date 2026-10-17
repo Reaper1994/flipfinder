@@ -1,0 +1,77 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+)
+
+// Config is loaded from watchlist.json. Secrets come from the environment.
+type Config struct {
+	Marketplace string `json:"marketplace"` // e.g. EBAY_GB
+	Postcode    string `json:"postcode"`    // outward code like "UB3"; improves delivery estimates
+
+	// Auctions are only worth alerting on near the end, when the price is real.
+	AuctionMaxHoursLeft float64 `json:"auction_max_hours_left"`
+	AuctionMaxBids      int     `json:"auction_max_bids"`
+
+	// Your selling costs as a fraction of the sale price (0 for UK private sellers
+	// on eBay or local Facebook sales; set e.g. 0.13 if you sell as a business).
+	SellFeePct float64 `json:"sell_fee_pct"`
+
+	GlobalExclude []string `json:"global_exclude"`
+	Targets       []Target `json:"targets"`
+}
+
+type Target struct {
+	Name string `json:"name"`
+
+	// Normal searches and deliberate misspellings. Typo hits are flagged, as
+	// fewer buyers see them.
+	Queries     []string `json:"queries"`
+	TypoQueries []string `json:"typo_queries"`
+
+	// What it reliably resells for (check eBay sold listings / CeX). Update
+	// this every few weeks — it drives every profit number.
+	MarketPrice float64 `json:"market_price"`
+
+	MaxBuyRatio float64 `json:"max_buy_ratio"` // only consider listings at or below this × market price
+	MinProfit   float64 `json:"min_profit"`    // £ after costs
+	MinPrice    float64 `json:"min_price"`     // below this it's almost always a box, cable or controller
+
+	Exclude    []string `json:"exclude"`
+	RequireAny []string `json:"require_any"` // title must contain at least one, e.g. "m2" for a Mac mini M2
+}
+
+func LoadConfig(path string) (Config, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return Config{}, err
+	}
+	var c Config
+	dec := json.NewDecoder(strings.NewReader(string(b)))
+	dec.DisallowUnknownFields() // catch typos in the watchlist
+	if err := dec.Decode(&c); err != nil {
+		return Config{}, fmt.Errorf("%s: %w", path, err)
+	}
+	if c.Marketplace == "" {
+		c.Marketplace = "EBAY_GB"
+	}
+	if c.AuctionMaxHoursLeft == 0 {
+		c.AuctionMaxHoursLeft = 3
+	}
+	if c.AuctionMaxBids == 0 {
+		c.AuctionMaxBids = 3
+	}
+	for i := range c.Targets {
+		t := &c.Targets[i]
+		if t.Name == "" || t.MarketPrice <= 0 || len(t.Queries)+len(t.TypoQueries) == 0 {
+			return Config{}, fmt.Errorf("target %d needs name, market_price and queries", i)
+		}
+		if t.MaxBuyRatio == 0 {
+			t.MaxBuyRatio = 0.75
+		}
+	}
+	return c, nil
+}

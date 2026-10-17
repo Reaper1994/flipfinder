@@ -1,0 +1,170 @@
+package main
+
+import (
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+)
+
+// Searcher is anything that returns listings for a query (eBay, or the demo fake).
+type Searcher interface {
+	Search(ctx context.Context, query string, maxPrice float64) ([]Listing, error)
+}
+
+// Listing is the subset of an eBay item summary we use.
+type Listing struct {
+	ItemID           string   `json:"itemId"`
+	Title            string   `json:"title"`
+	Price            *Money   `json:"price"`
+	CurrentBidPrice  *Money   `json:"currentBidPrice"`
+	BidCount         int      `json:"bidCount"`
+	BuyingOptions    []string `json:"buyingOptions"`
+	ItemWebURL       string   `json:"itemWebUrl"`
+	ItemEndDate      string   `json:"itemEndDate"`
+	ItemCreationDate string   `json:"itemCreationDate"`
+	Condition        string   `json:"condition"`
+	ShortDescription string   `json:"shortDescription"`
+	Image            *struct {
+		ImageURL string `json:"imageUrl"`
+	} `json:"image"`
+	ShippingOptions []struct {
+		ShippingCost     *Money `json:"shippingCost"`
+		ShippingCostType string `json:"shippingCostType"`
+	} `json:"shippingOptions"`
+	ItemLocation *struct {
+		City       string `json:"city"`
+		PostalCode string `json:"postalCode"`
+	} `json:"itemLocation"`
+	Seller *struct {
+		Username           string `json:"username"`
+		FeedbackPercentage string `json:"feedbackPercentage"`
+		FeedbackScore      int    `json:"feedbackScore"`
+	} `json:"seller"`
+}
+
+type Money struct {
+	Value    string `json:"value"`
+	Currency string `json:"currency"`
+}
+
+func (m *Money) Float() (float64, bool) {
+	if m == nil {
+		return 0, false
+	}
+	f, err := strconv.ParseFloat(m.Value, 64)
+	return f, err == nil
+}
+
+// EbayClient uses the official Browse API with an application token
+// (client-credentials grant). No scraping, no login.
+type EbayClient struct {
+	ClientID, ClientSecret string
+	Marketplace            string
+	Postcode               string
+	HTTP                   *http.Client
+
+	mu      sync.Mutex
+	token   string
+	expires time.Time
+}
+
+func NewEbayClient(id, secret, marketplace, postcode string) *EbayClient {
+	return &EbayClient{
+		ClientID: id, ClientSecret: secret, Marketplace: marketplace, Postcode: postcode,
+		HTTP: &http.Client{Timeout: 20 * time.Second},
+	}
+}
+
+func (c *EbayClient) accessToken(ctx context.Context) (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.token != "" && time.Now().Before(c.expires) {
+		return c.token, nil
+	}
+	form := url.Values{
+		"grant_type": {"client_credentials"},
+		"scope":      {"https://api.ebay.com/oauth/api_scope"},
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		"https://api.ebay.com/identity/v1/oauth2/token", strings.NewReader(form.Encode()))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(c.ClientID+":"+c.ClientSecret)))
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("ebay token: %s (check EBAY_CLIENT_ID / EBAY_CLIENT_SECRET are production keys)", resp.Status)
+	}
+	var tok struct {
+		AccessToken string `json:"access_token"`
+		ExpiresIn   int    `json:"expires_in"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&tok); err != nil {
+		return "", err
+	}
+	c.token = tok.AccessToken
+	c.expires = time.Now().Add(time.Duration(tok.ExpiresIn)*time.Second - 5*time.Minute)
+	return c.token, nil
+}
+
+// Search returns the newest UK listings for query priced up to maxPrice,
+// excluding eBay's "for parts or not working" condition.
+func (c *EbayClient) Search(ctx context.Context, query string, maxPrice float64) ([]Listing, error) {
+	tok, err := c.accessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	filter := strings.Join([]string{
+		fmt.Sprintf("price:[..%.0f]", maxPrice),
+		"priceCurrency:GBP",
+		"itemLocationCountry:GB",
+		"buyingOptions:{FIXED_PRICE|AUCTION|BEST_OFFER}",
+		// New, open box, refurbished and used grades; 7000 (for parts) left out.
+		"conditionIds:{1000|1500|2000|2010|2020|2030|2500|2750|3000|4000|5000|6000}",
+	}, ",")
+	q := url.Values{
+		"q":      {query},
+		"filter": {filter},
+		"sort":   {"newlyListed"},
+		"limit":  {"50"},
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		"https://api.ebay.com/buy/browse/v1/item_summary/search?"+q.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+tok)
+	req.Header.Set("X-EBAY-C-MARKETPLACE-ID", c.Marketplace)
+	if c.Postcode != "" {
+		req.Header.Set("X-EBAY-C-ENDUSERCTX", "contextualLocation="+url.QueryEscape("country=GB,zip="+c.Postcode))
+	}
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 500))
+		return nil, fmt.Errorf("ebay search %q: %s %s", query, resp.Status, body)
+	}
+	var out struct {
+		ItemSummaries []Listing `json:"itemSummaries"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, err
+	}
+	return out.ItemSummaries, nil
+}

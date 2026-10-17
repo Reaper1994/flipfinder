@@ -1,0 +1,47 @@
+name: flipfinder
+
+on:
+  schedule:
+    # Every 30 minutes, 7am–midnight UK time. ~36 runs/day ≈ 1,100 minutes/month,
+    # inside the 2,000 free minutes for private repos. GitHub may delay runs a bit.
+    - cron: "*/30 6-23 * * *"
+  workflow_dispatch: {} # "Run workflow" button for testing
+
+concurrency:
+  group: flipfinder
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # Remember which listings were already alerted between runs.
+      - name: Restore seen listings
+        uses: actions/cache/restore@v4
+        with:
+          path: seen.json
+          key: seen-${{ github.run_id }}
+          restore-keys: seen-
+
+      - name: Scan eBay
+        env:
+          EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+          EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: go run . -config watchlist.json -state seen.json
+
+      - name: Save seen listings
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: seen.json
+          key: seen-${{ github.run_id }}

@@ -1,0 +1,70 @@
+{
+  "marketplace": "EBAY_GB",
+  "postcode": "UB3",
+  "auction_max_hours_left": 3,
+  "auction_max_bids": 3,
+  "sell_fee_pct": 0,
+
+  "global_exclude": [
+    "box only", "empty box", "wanted", "faulty", "broken", "not working", "for parts",
+    "spares", "repair", "cracked", "icloud locked", "activation lock", "locked to",
+    "case only", "skin", "sticker", "stand only", "controller only", "replica", "read description"
+  ],
+
+  "targets": [
+    {
+      "name": "PS5 console",
+      "queries": ["ps5 console", "playstation 5 console", "ps5 slim"],
+      "typo_queries": ["playstaion 5", "play station 5", "ps 5 console", "plastation 5"],
+      "market_price": 320,
+      "max_buy_ratio": 0.8,
+      "min_profit": 40,
+      "min_price": 140,
+      "exclude": ["ps4", "portal", "faceplate", "cover", "disc drive only", "vr2"]
+    },
+    {
+      "name": "Mac mini M2",
+      "queries": ["mac mini m2"],
+      "typo_queries": ["mac mni m2", "macmini m2", "mac minni m2", "apple mini m2"],
+      "require_any": ["m2"],
+      "market_price": 380,
+      "max_buy_ratio": 0.8,
+      "min_profit": 50,
+      "min_price": 180,
+      "exclude": ["m2 pro", "ssd only", "ram only"]
+    },
+    {
+      "name": "Mac mini M4",
+      "queries": ["mac mini m4"],
+      "typo_queries": ["mac mni m4", "macmini m4", "mac minni m4"],
+      "require_any": ["m4"],
+      "market_price": 480,
+      "max_buy_ratio": 0.8,
+      "min_profit": 60,
+      "min_price": 250,
+      "exclude": ["m4 pro"]
+    },
+    {
+      "name": "Nintendo Switch OLED",
+      "queries": ["switch oled console"],
+      "typo_queries": ["nintendo swich oled", "switch oeld", "nintendo switch oled"],
+      "require_any": ["oled"],
+      "market_price": 190,
+      "max_buy_ratio": 0.75,
+      "min_profit": 30,
+      "min_price": 90,
+      "exclude": ["dock only", "joycon only", "joy-con only", "lite", "switch 2"]
+    },
+    {
+      "name": "Steam Deck OLED",
+      "queries": ["steam deck oled"],
+      "typo_queries": ["steamdeck oled", "steam dek oled"],
+      "require_any": ["oled"],
+      "market_price": 380,
+      "max_buy_ratio": 0.8,
+      "min_profit": 50,
+      "min_price": 200,
+      "exclude": ["screen protector", "dock only"]
+    }
+  ]
+}
