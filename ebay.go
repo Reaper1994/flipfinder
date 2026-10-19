@@ -67,6 +67,7 @@ func (m *Money) Float() (float64, bool) {
 // (client-credentials grant). No scraping, no login.
 type EbayClient struct {
 	ClientID, ClientSecret string
+	BaseURL                string // production or sandbox API host, see EbayBaseURL
 	Marketplace            string
 	Postcode               string
 	HTTP                   *http.Client
@@ -76,9 +77,21 @@ type EbayClient struct {
 	expires time.Time
 }
 
-func NewEbayClient(id, secret, marketplace, postcode string) *EbayClient {
+// EbayBaseURL maps EBAY_ENV to an API host. Empty means production; sandbox
+// keys (their IDs contain "-SBX-") only work against the sandbox host.
+func EbayBaseURL(env string) (string, error) {
+	switch strings.ToLower(env) {
+	case "", "production", "prod":
+		return "https://api.ebay.com", nil
+	case "sandbox":
+		return "https://api.sandbox.ebay.com", nil
+	}
+	return "", fmt.Errorf("EBAY_ENV must be production or sandbox, got %q", env)
+}
+
+func NewEbayClient(id, secret, baseURL, marketplace, postcode string) *EbayClient {
 	return &EbayClient{
-		ClientID: id, ClientSecret: secret, Marketplace: marketplace, Postcode: postcode,
+		ClientID: id, ClientSecret: secret, BaseURL: baseURL, Marketplace: marketplace, Postcode: postcode,
 		HTTP: &http.Client{Timeout: 20 * time.Second},
 	}
 }
@@ -94,7 +107,7 @@ func (c *EbayClient) accessToken(ctx context.Context) (string, error) {
 		"scope":      {"https://api.ebay.com/oauth/api_scope"},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		"https://api.ebay.com/identity/v1/oauth2/token", strings.NewReader(form.Encode()))
+		c.BaseURL+"/identity/v1/oauth2/token", strings.NewReader(form.Encode()))
 	if err != nil {
 		return "", err
 	}
@@ -106,7 +119,7 @@ func (c *EbayClient) accessToken(ctx context.Context) (string, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("ebay token: %s (check EBAY_CLIENT_ID / EBAY_CLIENT_SECRET are production keys)", resp.Status)
+		return "", fmt.Errorf("ebay token: %s (check EBAY_CLIENT_ID / EBAY_CLIENT_SECRET, and set EBAY_ENV=sandbox for sandbox keys)", resp.Status)
 	}
 	var tok struct {
 		AccessToken string `json:"access_token"`
@@ -142,7 +155,7 @@ func (c *EbayClient) Search(ctx context.Context, query string, maxPrice float64)
 		"limit":  {"50"},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-		"https://api.ebay.com/buy/browse/v1/item_summary/search?"+q.Encode(), nil)
+		c.BaseURL+"/buy/browse/v1/item_summary/search?"+q.Encode(), nil)
 	if err != nil {
 		return nil, err
 	}

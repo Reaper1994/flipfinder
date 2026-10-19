@@ -46,7 +46,14 @@ func main() {
 		if id == "" || secret == "" {
 			log.Fatal("set EBAY_CLIENT_ID and EBAY_CLIENT_SECRET (or try -demo)")
 		}
-		search = NewEbayClient(id, secret, cfg.Marketplace, cfg.Postcode)
+		base, err := EbayBaseURL(os.Getenv("EBAY_ENV"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		if strings.Contains(id, "-SBX-") && !strings.Contains(base, "sandbox") {
+			log.Print("EBAY_CLIENT_ID looks like a sandbox key; set EBAY_ENV=sandbox")
+		}
+		search = NewEbayClient(id, secret, base, cfg.Marketplace, cfg.Postcode)
 
 		if key := os.Getenv("TYPESAFE_API_KEY"); key != "" {
 			j, err := NewJev(envOr("TYPESAFE_URL", "https://api.typesafe.ai"), key, envOr("FLIP_JEV_MODEL", "jev-latest"))
