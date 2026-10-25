@@ -5,7 +5,12 @@ on:
     # Every 30 minutes, 7am–midnight UK time. ~36 runs/day ≈ 1,100 minutes/month,
     # inside the 2,000 free minutes for private repos. GitHub may delay runs a bit.
     - cron: "*/30 6-23 * * *"
-  workflow_dispatch: {} # "Run workflow" button for testing
+  workflow_dispatch: # "Run workflow" button for testing
+    inputs:
+      dry:
+        description: "Dry run: print deals in the log, send nothing to Telegram"
+        type: boolean
+        default: true
 
 concurrency:
   group: flipfinder
@@ -34,10 +39,11 @@ jobs:
         env:
           EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
           EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
+          EBAY_ENV: ${{ vars.EBAY_ENV }} # set to "sandbox" for sandbox keys; empty means production
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-        run: go run . -config watchlist.json -state seen.json
+        run: go run . -config watchlist.json -state seen.json ${{ inputs.dry && '-dry -v' || '' }}
 
       - name: Save seen listings
         if: always()

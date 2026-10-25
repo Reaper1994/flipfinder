@@ -37,6 +37,8 @@ go test ./...
 
 **1. eBay API keys (free).** Sign up at developer.ebay.com, create an app, and copy the **Production** App ID (Client ID) and Cert ID (Client Secret). Default limit is 5,000 calls/day; this uses about 20 per run.
 
+   To test with **Sandbox** keys (their App ID contains `-SBX-`), also set `EBAY_ENV=sandbox`. The sandbox only holds eBay's test listings, so expect few or no deals: it proves the keys and setup work, not the deal finding.
+
 **2. Telegram bot (free).** Message @BotFather → `/newbot` → copy the token. Send your bot any message, then open `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy `chat.id`.
 
 **3. Jev (optional but recommended).** Use your TypeSafe key. Without it, only the price rules run.
@@ -56,7 +58,8 @@ go run . -every 15m                  # keep running (on a VPS)
 
 1. Push this folder to a **private** GitHub repo.
 2. Repo → Settings → Secrets and variables → Actions → add `EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TYPESAFE_API_KEY`.
-3. Actions tab → **flipfinder** → **Run workflow** to test.
+   For sandbox keys, also add a **variable** (Variables tab, not Secrets) `EBAY_ENV` = `sandbox`.
+3. Actions tab → **flipfinder** → **Run workflow** to test. "Dry run" is ticked by default: deals and skip reasons go to the run log and nothing is sent to Telegram, so the Telegram secrets aren't needed for that test.
 
 It then runs every 30 minutes from 7am to midnight UK time, about 1,100 of your 2,000 free monthly minutes. GitHub can delay scheduled runs by a few minutes at busy times, and pauses schedules on repos with no activity for 60 days (push a commit to wake it). For faster checks, run `-every 10m` on your existing VPS instead.
 
