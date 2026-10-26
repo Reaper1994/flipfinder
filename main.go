@@ -24,9 +24,25 @@ func main() {
 		every   = flag.Duration("every", 0, "keep running and check this often, e.g. 15m (default: run once, for cron/GitHub Actions)")
 		maxSend = flag.Int("max", 8, "maximum alerts per run")
 		verbose = flag.Bool("v", false, "log why listings were skipped")
+		ping    = flag.Bool("ping", false, "send one test message to Telegram and exit")
 	)
 	flag.Parse()
 	log.SetFlags(log.Ltime)
+
+	if *ping {
+		tok, chat := os.Getenv("TELEGRAM_BOT_TOKEN"), os.Getenv("TELEGRAM_CHAT_ID")
+		if tok == "" || chat == "" {
+			log.Fatal("set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID")
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+		msg := "✅ <b>flipfinder is connected</b>\nAlerts for underpriced eBay listings will arrive in this chat."
+		if err := NewTelegram(tok, chat).SendText(ctx, msg); err != nil {
+			log.Fatal(err)
+		}
+		log.Print("test message sent to Telegram")
+		return
+	}
 
 	cfg, err := LoadConfig(*cfgPath)
 	if err != nil {

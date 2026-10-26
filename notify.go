@@ -28,9 +28,14 @@ func NewTelegram(token, chatID string) *Telegram {
 }
 
 func (t *Telegram) Send(ctx context.Context, d Deal) error {
+	return t.SendText(ctx, formatDeal(d, true))
+}
+
+// SendText sends one HTML-formatted message, e.g. a -ping test.
+func (t *Telegram) SendText(ctx context.Context, text string) error {
 	form := url.Values{
 		"chat_id":    {t.ChatID},
-		"text":       {formatDeal(d, true)},
+		"text":       {text},
 		"parse_mode": {"HTML"},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
