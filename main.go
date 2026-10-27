@@ -58,7 +58,8 @@ func main() {
 		search, checker = demoSearcher{}, demoChecker{}
 		*state = "" // in-memory only
 	} else {
-		id, secret := os.Getenv("EBAY_CLIENT_ID"), os.Getenv("EBAY_CLIENT_SECRET")
+		// Trim stray spaces/newlines that often come along when keys are pasted.
+		id, secret := strings.TrimSpace(os.Getenv("EBAY_CLIENT_ID")), strings.TrimSpace(os.Getenv("EBAY_CLIENT_SECRET"))
 		if id == "" || secret == "" {
 			log.Fatal("set EBAY_CLIENT_ID and EBAY_CLIENT_SECRET (or try -demo)")
 		}
