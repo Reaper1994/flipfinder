@@ -70,6 +70,7 @@ func main() {
 		if strings.Contains(id, "-SBX-") && !strings.Contains(base, "sandbox") {
 			log.Print("EBAY_CLIENT_ID looks like a sandbox key; set EBAY_ENV=sandbox")
 		}
+		log.Printf("eBay keys: App ID %s, Cert ID %s, host %s", keyKind(id, "-"), keyKind(secret, ""), base)
 		search = NewEbayClient(id, secret, base, cfg.Marketplace, cfg.Postcode)
 
 		if key := os.Getenv("TYPESAFE_API_KEY"); key != "" {
@@ -232,4 +233,16 @@ func envOr(k, def string) string {
 		return v
 	}
 	return def
+}
+
+// keyKind reports whether an eBay key is a production or sandbox one without
+// revealing it: App IDs contain "-PRD-"/"-SBX-", Cert IDs start with "PRD-"/"SBX-".
+func keyKind(key, sep string) string {
+	switch {
+	case strings.Contains(key, sep+"PRD-") && (sep != "" || strings.HasPrefix(key, "PRD-")):
+		return fmt.Sprintf("production (%d chars)", len(key))
+	case strings.Contains(key, sep+"SBX-") && (sep != "" || strings.HasPrefix(key, "SBX-")):
+		return fmt.Sprintf("SANDBOX (%d chars)", len(key))
+	}
+	return fmt.Sprintf("UNRECOGNISED (%d chars; not an App ID or Cert ID?)", len(key))
 }
