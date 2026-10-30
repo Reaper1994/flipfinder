@@ -11,6 +11,10 @@ on:
         description: "Dry run: print deals in the log, send nothing to Telegram"
         type: boolean
         default: true
+      ping:
+        description: "Only test Telegram and the Jev key (skips the eBay scan)"
+        type: boolean
+        default: false
 
 concurrency:
   group: flipfinder
@@ -43,7 +47,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-        run: go run . -config watchlist.json -state seen.json ${{ inputs.dry && '-dry -v' || '' }}
+        run: go run . -config watchlist.json -state seen.json ${{ inputs.ping && '-ping' || (inputs.dry && '-dry -v' || '') }}
 
       - name: Save seen listings
         if: always()

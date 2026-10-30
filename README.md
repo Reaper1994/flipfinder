@@ -74,6 +74,7 @@ It then runs every 30 minutes from 7am to midnight UK time, about 1,100 of your 
 | `-every` | run once | e.g. `15m` to loop |
 | `-max` | 8 | alerts per run |
 | `-v` | off | log why listings were skipped |
+| `-ping` | off | test Telegram and the Jev key without searching eBay, then exit |
 
 ## Before you buy
 

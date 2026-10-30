@@ -119,7 +119,10 @@ func (c *EbayClient) accessToken(ctx context.Context) (string, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("ebay token: %s (check EBAY_CLIENT_ID / EBAY_CLIENT_SECRET, and set EBAY_ENV=sandbox for sandbox keys)", resp.Status)
+		// eBay's error body (e.g. invalid_client) names the cause and holds no secrets.
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 300))
+		return "", fmt.Errorf("ebay token: %s %s (check EBAY_CLIENT_ID / EBAY_CLIENT_SECRET, and set EBAY_ENV=sandbox for sandbox keys)",
+			resp.Status, strings.TrimSpace(string(body)))
 	}
 	var tok struct {
 		AccessToken string `json:"access_token"`
