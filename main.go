@@ -30,17 +30,9 @@ func main() {
 	log.SetFlags(log.Ltime)
 
 	if *ping {
-		tok, chat := os.Getenv("TELEGRAM_BOT_TOKEN"), os.Getenv("TELEGRAM_CHAT_ID")
-		if tok == "" || chat == "" {
-			log.Fatal("set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID")
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-		defer cancel()
-		msg := "✅ <b>flipfinder is connected</b>\nAlerts for underpriced eBay listings will arrive in this chat."
-		if err := NewTelegram(tok, chat).SendText(ctx, msg); err != nil {
+		if err := runPing(); err != nil {
 			log.Fatal(err)
 		}
-		log.Print("test message sent to Telegram")
 		return
 	}
 
@@ -245,4 +237,50 @@ func keyKind(key, sep string) string {
 		return fmt.Sprintf("SANDBOX (%d chars)", len(key))
 	}
 	return fmt.Sprintf("UNRECOGNISED (%d chars; not an App ID or Cert ID?)", len(key))
+}
+
+// runPing checks each configured service without touching eBay: it sends
+// Telegram a test message and asks Jev about one fictional listing.
+func runPing() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	tested := 0
+
+	if tok, chat := os.Getenv("TELEGRAM_BOT_TOKEN"), os.Getenv("TELEGRAM_CHAT_ID"); tok != "" && chat != "" {
+		msg := "✅ <b>flipfinder is connected</b>\nAlerts for underpriced eBay listings will arrive in this chat."
+		if err := NewTelegram(tok, chat).SendText(ctx, msg); err != nil {
+			return fmt.Errorf("telegram test failed: %w", err)
+		}
+		log.Print("telegram: test message sent")
+		tested++
+	} else {
+		log.Print("telegram: skipped (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not set)")
+	}
+
+	if key := strings.TrimSpace(os.Getenv("TYPESAFE_API_KEY")); key != "" {
+		j, err := NewJev(envOr("TYPESAFE_URL", "https://api.typesafe.ai"), key, envOr("FLIP_JEV_MODEL", "jev-latest"))
+		if err != nil {
+			return err
+		}
+		t := Target{Name: "PS5 console", MarketPrice: 320}
+		d := Deal{Target: t.Name, Price: 210, Listing: Listing{
+			Title:            "Sony PlayStation 5 Disc Edition console, boxed with controller",
+			ShortDescription: "Fully working, factory reset, original box and cables.",
+			Condition:        "Used",
+		}}
+		a, err := j.Check(ctx, t, d)
+		if err != nil {
+			return fmt.Errorf("jev test failed: %w", err)
+		}
+		keep, verdict, _ := Decide(a)
+		log.Printf("jev: answered the test listing: %+v (keep=%v, %s)", a, keep, verdict)
+		tested++
+	} else {
+		log.Print("jev: skipped (TYPESAFE_API_KEY not set)")
+	}
+
+	if tested == 0 {
+		return fmt.Errorf("nothing to test: set the Telegram and/or TYPESAFE_API_KEY variables")
+	}
+	return nil
 }

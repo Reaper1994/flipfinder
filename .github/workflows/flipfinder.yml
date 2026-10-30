@@ -12,7 +12,7 @@ on:
         type: boolean
         default: true
       ping:
-        description: "Only send a test message to Telegram (skips the eBay scan)"
+        description: "Only test Telegram and the Jev key (skips the eBay scan)"
         type: boolean
         default: false
 
