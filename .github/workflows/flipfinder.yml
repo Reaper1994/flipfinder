@@ -2,9 +2,16 @@ name: flipfinder
 
 on:
   schedule:
-    # Every 30 minutes, 7am–midnight UK time. ~36 runs/day ≈ 1,100 minutes/month,
-    # inside the 2,000 free minutes for private repos. GitHub may delay runs a bit.
-    - cron: "*/30 6-23 * * *"
+    # Wakes every 30 minutes; the "when" job below decides whether to scan, using
+    # the SCAN_HOURS repo variable (Settings → Secrets and variables → Actions →
+    # Variables), so you change scan times without editing this file.
+    #   SCAN_HOURS = 7-23            every half hour, 7am to 11:30pm UK time (default)
+    #   SCAN_HOURS = 7-9,12,18-22    mornings, lunchtime and evenings
+    #   SCAN_HOURS = off             paused
+    # Hours are UK time (BST/GMT handled). Skipped wake-ups cost ~1 minute each, so
+    # the total stays around 1,500 of the 2,000 free monthly minutes.
+    # GitHub may delay scheduled runs by a few minutes.
+    - cron: "*/30 * * * *"
   workflow_dispatch: # "Run workflow" button for testing
     inputs:
       dry:
@@ -25,7 +32,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  when:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        env:
+          EVENT: ${{ github.event_name }}
+          SCAN_HOURS: ${{ vars.SCAN_HOURS }}
+        run: |
+          # Manual runs always go ahead.
+          if [ "$EVENT" != "schedule" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          spec=$(echo "${SCAN_HOURS:-7-23}" | tr -d ' ' | tr 'A-Z' 'a-z')
+          hour=$(TZ=Europe/London date +%-H)
+          run=false
+          if [ "$spec" != "off" ]; then
+            IFS=',' read -ra parts <<< "$spec"
+            for p in "${parts[@]}"; do
+              if [[ "$p" =~ ^([0-9]{1,2})-([0-9]{1,2})$ ]]; then
+                [ "$hour" -ge "${BASH_REMATCH[1]}" ] && [ "$hour" -le "${BASH_REMATCH[2]}" ] && run=true
+              elif [[ "$p" =~ ^[0-9]{1,2}$ ]]; then
+                [ "$hour" -eq "$p" ] && run=true
+              else
+                echo "::warning::Ignoring '$p' in SCAN_HOURS (use e.g. 7-9,12,18-22 or off)"
+              fi
+            done
+          fi
+          echo "UK hour $hour, SCAN_HOURS='$spec' → scan=$run"
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
   scan:
+    needs: when
+    if: needs.when.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
