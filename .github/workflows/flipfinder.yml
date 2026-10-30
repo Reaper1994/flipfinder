@@ -2,14 +2,14 @@ name: flipfinder
 
 on:
   schedule:
-    # Wakes every 30 minutes; the "when" job below decides whether to scan, using
+    # Wakes every 30 minutes; the "Check scan hours" step decides whether to scan, using
     # the SCAN_HOURS repo variable (Settings → Secrets and variables → Actions →
     # Variables), so you change scan times without editing this file.
     #   SCAN_HOURS = 7-23            every half hour, 7am to 11:30pm UK time (default)
     #   SCAN_HOURS = 7-9,12,18-22    mornings, lunchtime and evenings
     #   SCAN_HOURS = off             paused
-    # Hours are UK time (BST/GMT handled). Skipped wake-ups cost ~1 minute each, so
-    # the total stays around 1,500 of the 2,000 free monthly minutes.
+    # Hours are UK time (BST/GMT handled). Each wake-up, scan or not, costs ~1 billed
+    # minute: 48/day ≈ 1,450 of the 2,000 free monthly minutes.
     # GitHub may delay scheduled runs by a few minutes.
     - cron: "*/30 * * * *"
   workflow_dispatch: # "Run workflow" button for testing
@@ -32,13 +32,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  when:
+  scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 1
-    outputs:
-      run: ${{ steps.check.outputs.run }}
+    timeout-minutes: 5
     steps:
-      - id: check
+      - name: Check scan hours
+        id: check
         env:
           EVENT: ${{ github.event_name }}
           SCAN_HOURS: ${{ vars.SCAN_HOURS }}
@@ -63,20 +62,17 @@ jobs:
           echo "UK hour $hour, SCAN_HOURS='$spec' → scan=$run"
           echo "run=$run" >> "$GITHUB_OUTPUT"
 
-  scan:
-    needs: when
-    if: needs.when.outputs.run == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
       - uses: actions/checkout@v4
+        if: steps.check.outputs.run == 'true'
 
       - uses: actions/setup-go@v5
+        if: steps.check.outputs.run == 'true'
         with:
           go-version-file: go.mod
 
       # Remember which listings were already alerted between runs.
       - name: Restore seen listings
+        if: steps.check.outputs.run == 'true'
         uses: actions/cache/restore@v4
         with:
           path: seen.json
@@ -84,10 +80,11 @@ jobs:
           restore-keys: seen-
 
       - name: Forget seen listings
-        if: ${{ inputs.reset_seen }}
+        if: ${{ steps.check.outputs.run == 'true' && inputs.reset_seen }}
         run: rm -f seen.json
 
       - name: Scan eBay
+        if: steps.check.outputs.run == 'true'
         env:
           EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
           EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
@@ -98,7 +95,7 @@ jobs:
         run: go run . -config watchlist.json -state seen.json ${{ inputs.ping && '-ping' || (inputs.dry && '-dry -v' || '') }}
 
       - name: Save seen listings
-        if: always()
+        if: always() && steps.check.outputs.run == 'true'
         uses: actions/cache/save@v4
         with:
           path: seen.json
