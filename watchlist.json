@@ -268,7 +268,11 @@
         "external",
         "portable",
         "1tb",
-        "512gb"
+        "512gb",
+        "4tb",
+        "256gb",
+        "500gb",
+        "128gb"
       ]
     },
     {
@@ -299,7 +303,13 @@
         "heatsink only",
         "sata",
         "external",
-        "portable"
+        "portable",
+        "1tb",
+        "2tb",
+        "256gb",
+        "500gb",
+        "512gb",
+        "128gb"
       ]
     },
     {
