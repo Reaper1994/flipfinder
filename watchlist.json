@@ -13,58 +13,82 @@
 
   "targets": [
     {
-      "name": "PS5 console",
-      "queries": ["ps5 console", "playstation 5 console", "ps5 slim"],
-      "typo_queries": ["playstaion 5", "play station 5", "ps 5 console", "plastation 5"],
-      "market_price": 320,
-      "max_buy_ratio": 0.8,
-      "min_profit": 40,
-      "min_price": 140,
-      "exclude": ["ps4", "portal", "faceplate", "cover", "disc drive only", "vr2"]
+      "name": "Nintendo Switch 2 console",
+      "queries": ["nintendo switch 2 console", "switch 2 console"],
+      "typo_queries": ["nintendo swich 2", "nintendo switch2", "switch two console"],
+      "market_price": 360, "max_buy_ratio": 0.8, "min_profit": 40, "min_price": 200,
+      "require_any": ["switch 2", "switch2", "switch two"],
+      "exclude": ["for switch 2", "for nintendo switch 2", "compatible", "game only", "games only", "cartridge", "joy-con only", "joycon only", "dock only", "pro controller", "carry case", "oled", "lite"]
     },
     {
       "name": "Mac mini M2",
       "queries": ["mac mini m2"],
       "typo_queries": ["mac mni m2", "macmini m2", "mac minni m2", "apple mini m2"],
-      "require_any": ["m2"],
-      "market_price": 380,
-      "max_buy_ratio": 0.8,
-      "min_profit": 50,
-      "min_price": 180,
-      "exclude": ["m2 pro", "ssd only", "ram only"]
+      "market_price": 380, "max_buy_ratio": 0.8, "min_profit": 50, "min_price": 180,
+      "require_any": ["m2"]
     },
     {
       "name": "Mac mini M4",
       "queries": ["mac mini m4"],
       "typo_queries": ["mac mni m4", "macmini m4", "mac minni m4"],
-      "require_any": ["m4"],
-      "market_price": 480,
-      "max_buy_ratio": 0.8,
-      "min_profit": 60,
-      "min_price": 250,
-      "exclude": ["m4 pro"]
+      "market_price": 480, "max_buy_ratio": 0.8, "min_profit": 60, "min_price": 250,
+      "require_any": ["m4"]
     },
     {
-      "name": "Nintendo Switch OLED",
-      "queries": ["switch oled console"],
-      "typo_queries": ["nintendo swich oled", "switch oeld", "nintendo switch oled"],
-      "require_any": ["oled"],
-      "market_price": 190,
-      "max_buy_ratio": 0.75,
-      "min_profit": 30,
-      "min_price": 90,
-      "exclude": ["dock only", "joycon only", "joy-con only", "lite", "switch 2"]
+      "name": "NVMe SSD 2TB",
+      "queries": ["nvme ssd 2tb", "m.2 ssd 2tb", "samsung 990 pro 2tb", "wd black sn850x 2tb", "crucial t500 2tb"],
+      "typo_queries": ["nvme 2 tb", "nmve 2tb", "m2 ssd 2tb"],
+      "market_price": 120, "max_buy_ratio": 0.75, "min_profit": 20, "min_price": 45,
+      "require_any": ["2tb", "2 tb"],
+      "exclude": ["enclosure", "adapter", "caddy", "heatsink only", "sata", "external", "portable", "1tb", "512gb"]
     },
     {
-      "name": "Steam Deck OLED",
-      "queries": ["steam deck oled"],
-      "typo_queries": ["steamdeck oled", "steam dek oled"],
+      "name": "NVMe SSD 4TB",
+      "queries": ["nvme ssd 4tb", "m.2 ssd 4tb", "samsung 990 pro 4tb", "wd black sn850x 4tb"],
+      "typo_queries": ["nvme 4 tb", "nmve 4tb", "m2 ssd 4tb"],
+      "market_price": 230, "max_buy_ratio": 0.75, "min_profit": 35, "min_price": 90,
+      "require_any": ["4tb", "4 tb"],
+      "exclude": ["enclosure", "adapter", "caddy", "heatsink only", "sata", "external", "portable"]
+    },
+    {
+      "name": "27-inch OLED gaming monitor (1440p, 240Hz+)",
+      "queries": ["oled gaming monitor 27", "qd-oled monitor 27", "aw2725df", "pg27aqdm", "msi mag 271qpx", "lg 27gr95qe"],
+      "typo_queries": ["oled moniter 27", "qd oled monitor", "oled gamming monitor"],
+      "market_price": 450, "max_buy_ratio": 0.75, "min_profit": 60, "min_price": 200,
       "require_any": ["oled"],
-      "market_price": 380,
-      "max_buy_ratio": 0.8,
-      "min_profit": 50,
-      "min_price": 200,
-      "exclude": ["screen protector", "dock only"]
+      "exclude": ["tv", "screen protector", "arm", "mount", "burn", "dead pixel", "4k"]
+    },
+    {
+      "name": "32-inch 4K OLED monitor",
+      "queries": ["32 oled monitor 4k", "aw3225qf", "pg32ucdm", "msi mpg 321urx", "samsung odyssey oled g8 32"],
+      "typo_queries": ["oled moniter 32", "qd oled 4k monitor"],
+      "market_price": 700, "max_buy_ratio": 0.75, "min_profit": 80, "min_price": 350,
+      "require_any": ["oled"],
+      "exclude": ["tv", "screen protector", "arm", "mount", "burn", "dead pixel"]
+    },
+    {
+      "name": "Herman Miller Aeron chair",
+      "queries": ["herman miller aeron"],
+      "typo_queries": ["herman millar aeron", "hermann miller aeron", "herman miller aron", "aeron chair"],
+      "market_price": 450, "max_buy_ratio": 0.7, "min_profit": 70, "min_price": 120,
+      "require_any": ["aeron"],
+      "exclude": ["arm", "base only", "cylinder", "castor", "caster", "lumbar only", "seat only", "back only", "mesh only", "parts"]
+    },
+    {
+      "name": "Herman Miller Embody chair",
+      "queries": ["herman miller embody"],
+      "typo_queries": ["herman millar embody", "hermann miller embody", "embody chair"],
+      "market_price": 750, "max_buy_ratio": 0.7, "min_profit": 100, "min_price": 200,
+      "require_any": ["embody"],
+      "exclude": ["arm", "base only", "cylinder", "castor", "caster", "seat only", "parts"]
+    },
+    {
+      "name": "Steelcase Leap or Gesture chair",
+      "queries": ["steelcase leap v2", "steelcase gesture"],
+      "typo_queries": ["steel case leap", "steelcase leep", "steelcase jesture"],
+      "market_price": 320, "max_buy_ratio": 0.7, "min_profit": 50, "min_price": 90,
+      "require_any": ["leap", "gesture"],
+      "exclude": ["arm", "base only", "cylinder", "castor", "caster", "seat only", "parts"]
     }
   ]
 }
