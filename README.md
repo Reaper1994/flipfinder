@@ -61,7 +61,7 @@ go run . -every 15m                  # keep running (on a VPS)
    For sandbox keys, also add a **variable** (Variables tab, not Secrets) `EBAY_ENV` = `sandbox`.
 3. Actions tab → **flipfinder** → **Run workflow** to test. "Dry run" is ticked by default: deals and skip reasons go to the run log and nothing is sent to Telegram, so the Telegram secrets aren't needed for that test.
 
-It then scans every 30 minutes from 7am to midnight UK time. To change when it scans, add a repo **variable** `SCAN_HOURS` (Settings → Secrets and variables → Actions → Variables) with UK-time hours, e.g. `7-9,12,18-22` for mornings, lunchtime and evenings, or `off` to pause. No code change needed; it applies from the next half-hour. Manual "Run workflow" runs always scan. This uses about 1,500 of your 2,000 free monthly minutes. GitHub can delay scheduled runs by a few minutes at busy times, and pauses schedules on repos with no activity for 60 days (push a commit to wake it). For faster checks, run `-every 10m` on your existing VPS instead.
+It then scans every 30 minutes from 7am to midnight UK time. To change when it scans, add a repo **variable** `SCAN_HOURS` (Settings → Secrets and variables → Actions → Variables) with UK-time hours, e.g. `7-9,12,18-22` for mornings, lunchtime and evenings, or `off` to pause. No code change needed; it applies from the next half-hour. Manual "Run workflow" runs always scan. Each half-hourly wake-up costs about a minute whether or not it scans, so it uses about 1,450 of your 2,000 free monthly minutes. GitHub can delay scheduled runs by a few minutes at busy times, and pauses schedules on repos with no activity for 60 days (push a commit to wake it). For faster checks, run `-every 10m` on your existing VPS instead.
 
 ## Flags
 
