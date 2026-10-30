@@ -519,6 +519,112 @@
         "spare parts",
         "parts only"
       ]
+    },
+    {
+      "name": "Herman Miller Mirra 2 chair",
+      "queries": [
+        "herman miller mirra 2",
+        "herman miller mirra"
+      ],
+      "typo_queries": [
+        "herman millar mirra",
+        "hermann miller mirra",
+        "mirra chair",
+        "herman miller mira"
+      ],
+      "market_price": 320,
+      "max_buy_ratio": 0.7,
+      "min_profit": 60,
+      "min_price": 90,
+      "require_any": [
+        "mirra",
+        "mira"
+      ],
+      "exclude": [
+        "headrest only",
+        "head rest only",
+        "headrest for",
+        "headrest to fit",
+        "arms only",
+        "armrest only",
+        "arm pads",
+        "arm pad",
+        "armrest pads",
+        "replacement arm",
+        "replacement seat",
+        "replacement back",
+        "base only",
+        "seat only",
+        "back only",
+        "mesh only",
+        "cylinder only",
+        "gas lift only",
+        "gaslift only",
+        "replacement gas",
+        "castors only",
+        "casters only",
+        "wheels only",
+        "lumbar only",
+        "posturefit only",
+        "spare parts",
+        "parts only"
+      ]
+    },
+    {
+      "name": "Budget ergonomic chair (Hbada / Sihoo Doro)",
+      "queries": [
+        "hbada ergonomic chair",
+        "hbada p3",
+        "hbada e3",
+        "sihoo doro c300",
+        "sihoo doro s300"
+      ],
+      "typo_queries": [
+        "hbada office chair",
+        "hbada chair",
+        "sihoo chair",
+        "siho doro"
+      ],
+      "market_price": 110,
+      "max_buy_ratio": 0.55,
+      "min_profit": 30,
+      "min_price": 25,
+      "require_any": [
+        "hbada",
+        "sihoo",
+        "doro"
+      ],
+      "exclude": [
+        "headrest only",
+        "head rest only",
+        "headrest for",
+        "headrest to fit",
+        "arms only",
+        "armrest only",
+        "arm pads",
+        "arm pad",
+        "armrest pads",
+        "replacement arm",
+        "replacement seat",
+        "replacement back",
+        "base only",
+        "seat only",
+        "back only",
+        "mesh only",
+        "cylinder only",
+        "gas lift only",
+        "gaslift only",
+        "replacement gas",
+        "castors only",
+        "casters only",
+        "wheels only",
+        "lumbar only",
+        "posturefit only",
+        "spare parts",
+        "parts only",
+        "footrest only",
+        "foot rest only"
+      ]
     }
   ]
 }
