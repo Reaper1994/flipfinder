@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -162,5 +163,32 @@ func TestDryRunDoesNotUseUpAlerts(t *testing.T) {
 	}
 	if dry.n != 3 || live.n != 3 {
 		t.Fatalf("dry run printed %d, live run sent %d; want 3 and 3", dry.n, live.n)
+	}
+}
+
+func TestAeronFilterKeepsLoadedChairsDropsParts(t *testing.T) {
+	cfg, err := LoadConfig("watchlist.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var aeron Target
+	for _, tg := range cfg.Targets {
+		if strings.Contains(tg.Name, "Aeron") {
+			aeron = tg
+		}
+	}
+	now := time.Now()
+	keep := listing("Herman Miller Aeron Size B Fully Loaded Gaming Chair with Brand New Headrest, PostureFit and Gaslift, adjustable arms", "250")
+	if _, ok, why := Evaluate(cfg, aeron, keep, false, now); !ok {
+		t.Errorf("loaded Aeron skipped: %s", why)
+	}
+	for _, title := range []string{
+		"Headrest for Herman Miller Aeron chair",
+		"Herman Miller Aeron arm pads replacement pair",
+		"Herman Miller Aeron gas lift only",
+	} {
+		if _, ok, _ := Evaluate(cfg, aeron, listing(title, "250"), false, now); ok {
+			t.Errorf("part listing kept: %q", title)
+		}
 	}
 }

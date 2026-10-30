@@ -337,7 +337,7 @@
       "exclude": [
         "tv",
         "screen protector",
-        "arm",
+        "monitor arm",
         "mount",
         "burn",
         "dead pixel",
@@ -367,7 +367,7 @@
       "exclude": [
         "tv",
         "screen protector",
-        "arm",
+        "monitor arm",
         "mount",
         "burn",
         "dead pixel"
@@ -376,7 +376,10 @@
     {
       "name": "Herman Miller Aeron chair",
       "queries": [
-        "herman miller aeron"
+        "herman miller aeron",
+        "herman miller aeron size b",
+        "herman miller aeron fully loaded",
+        "aeron posturefit"
       ],
       "typo_queries": [
         "herman millar aeron",
@@ -384,7 +387,7 @@
         "herman miller aron",
         "aeron chair"
       ],
-      "market_price": 450,
+      "market_price": 500,
       "max_buy_ratio": 0.7,
       "min_profit": 70,
       "min_price": 120,
@@ -392,18 +395,33 @@
         "aeron"
       ],
       "exclude": [
-        "arm",
+        "headrest only",
+        "head rest only",
+        "headrest for",
+        "headrest to fit",
+        "arms only",
+        "armrest only",
+        "arm pads",
+        "arm pad",
+        "armrest pads",
+        "replacement arm",
+        "replacement seat",
+        "replacement back",
         "base only",
-        "cylinder",
-        "castor",
-        "caster",
-        "lumbar only",
         "seat only",
         "back only",
         "mesh only",
-        "parts",
-        "headrest",
-        "head rest"
+        "cylinder only",
+        "gas lift only",
+        "gaslift only",
+        "replacement gas",
+        "castors only",
+        "casters only",
+        "wheels only",
+        "lumbar only",
+        "posturefit only",
+        "spare parts",
+        "parts only"
       ]
     },
     {
@@ -424,15 +442,33 @@
         "embody"
       ],
       "exclude": [
-        "arm",
+        "headrest only",
+        "head rest only",
+        "headrest for",
+        "headrest to fit",
+        "arms only",
+        "armrest only",
+        "arm pads",
+        "arm pad",
+        "armrest pads",
+        "replacement arm",
+        "replacement seat",
+        "replacement back",
         "base only",
-        "cylinder",
-        "castor",
-        "caster",
         "seat only",
-        "parts",
-        "headrest",
-        "head rest"
+        "back only",
+        "mesh only",
+        "cylinder only",
+        "gas lift only",
+        "gaslift only",
+        "replacement gas",
+        "castors only",
+        "casters only",
+        "wheels only",
+        "lumbar only",
+        "posturefit only",
+        "spare parts",
+        "parts only"
       ]
     },
     {
@@ -455,15 +491,33 @@
         "gesture"
       ],
       "exclude": [
-        "arm",
+        "headrest only",
+        "head rest only",
+        "headrest for",
+        "headrest to fit",
+        "arms only",
+        "armrest only",
+        "arm pads",
+        "arm pad",
+        "armrest pads",
+        "replacement arm",
+        "replacement seat",
+        "replacement back",
         "base only",
-        "cylinder",
-        "castor",
-        "caster",
         "seat only",
-        "parts",
-        "headrest",
-        "head rest"
+        "back only",
+        "mesh only",
+        "cylinder only",
+        "gas lift only",
+        "gaslift only",
+        "replacement gas",
+        "castors only",
+        "casters only",
+        "wheels only",
+        "lumbar only",
+        "posturefit only",
+        "spare parts",
+        "parts only"
       ]
     }
   ]
