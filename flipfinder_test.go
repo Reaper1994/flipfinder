@@ -122,7 +122,7 @@ type countingNotifier struct{ n int }
 func (c *countingNotifier) Send(context.Context, Deal) error { c.n++; return nil }
 
 func TestDemoRunAlertsOnceOnly(t *testing.T) {
-	cfg, err := LoadConfig("watchlist.json")
+	cfg, err := LoadConfig("testdata/demo-watchlist.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,7 +144,7 @@ func TestDemoRunAlertsOnceOnly(t *testing.T) {
 }
 
 func TestDryRunDoesNotUseUpAlerts(t *testing.T) {
-	cfg, err := LoadConfig("watchlist.json")
+	cfg, err := LoadConfig("testdata/demo-watchlist.json")
 	if err != nil {
 		t.Fatal(err)
 	}

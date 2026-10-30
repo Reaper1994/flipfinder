@@ -29,7 +29,7 @@ Open on eBay
 ## Try it now (no keys)
 
 ```bash
-go run . -demo      # fictional listings, simulated Jev, prints to terminal
+go run . -demo -config testdata/demo-watchlist.json   # fictional listings, simulated Jev, prints to terminal
 go test ./...
 ```
 
