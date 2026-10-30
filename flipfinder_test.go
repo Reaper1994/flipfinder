@@ -192,3 +192,36 @@ func TestAeronFilterKeepsLoadedChairsDropsParts(t *testing.T) {
 		}
 	}
 }
+
+func TestChairTargetsKeepChairsDropParts(t *testing.T) {
+	cfg, err := LoadConfig("watchlist.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	find := func(sub string) Target {
+		for _, tg := range cfg.Targets {
+			if strings.Contains(tg.Name, sub) {
+				return tg
+			}
+		}
+		t.Fatalf("no target containing %q", sub)
+		return Target{}
+	}
+	now := time.Now()
+	cases := []struct {
+		target, title, price string
+		keep                 bool
+	}{
+		{"Mirra", "Herman Miller Mirra 2 office chair fully adjustable graphite", "150", true},
+		{"Mirra", "Herman Miller Mirra 2 arms only pair", "60", false},
+		{"Hbada", "HBADA P3 ergonomic office chair with footrest, barely used", "40", true},
+		{"Hbada", "Sihoo Doro C300 ergonomic desk chair black", "45", true},
+		{"Hbada", "Hbada chair footrest only", "30", false},
+	}
+	for _, c := range cases {
+		_, ok, why := Evaluate(cfg, find(c.target), listing(c.title, c.price), false, now)
+		if ok != c.keep {
+			t.Errorf("%q: kept=%v want %v (%s)", c.title, ok, c.keep, why)
+		}
+	}
+}
