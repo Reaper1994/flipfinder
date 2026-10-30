@@ -142,3 +142,25 @@ func TestDemoRunAlertsOnceOnly(t *testing.T) {
 		t.Fatalf("second run re-sent alerts: total %d", n.n)
 	}
 }
+
+func TestDryRunDoesNotUseUpAlerts(t *testing.T) {
+	cfg, err := LoadConfig("watchlist.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := filepath.Join(t.TempDir(), "seen.json")
+	dry := &countingNotifier{}
+	r := &Runner{Cfg: cfg, Search: demoSearcher{}, Check: demoChecker{}, Notify: dry,
+		StatePath: state, ReadOnly: true, MaxSend: 10}
+	if err := r.RunOnce(context.Background(), time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	live := &countingNotifier{}
+	r.Notify, r.ReadOnly = live, false
+	if err := r.RunOnce(context.Background(), time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if dry.n != 3 || live.n != 3 {
+		t.Fatalf("dry run printed %d, live run sent %d; want 3 and 3", dry.n, live.n)
+	}
+}

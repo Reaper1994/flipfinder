@@ -70,7 +70,7 @@ It then runs every 30 minutes from 7am to midnight UK time, about 1,100 of your 
 | `-config` | `watchlist.json` | targets and rules |
 | `-state` | `seen.json` | alerted-listing memory |
 | `-demo` | off | sample data, no keys |
-| `-dry` | off | print instead of Telegram |
+| `-dry` | off | print instead of Telegram; reads `seen.json` but never updates it |
 | `-every` | run once | e.g. `15m` to loop |
 | `-max` | 8 | alerts per run |
 | `-v` | off | log why listings were skipped |

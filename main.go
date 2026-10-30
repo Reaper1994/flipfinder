@@ -88,7 +88,7 @@ func main() {
 	defer stop()
 
 	r := &Runner{Cfg: cfg, Search: search, Check: checker, Notify: notify,
-		StatePath: *state, MaxSend: *maxSend, Verbose: *verbose}
+		StatePath: *state, ReadOnly: *dry, MaxSend: *maxSend, Verbose: *verbose}
 
 	for {
 		if err := r.RunOnce(ctx, time.Now()); err != nil {
@@ -114,6 +114,7 @@ type Runner struct {
 	Check     Checker // optional
 	Notify    Notifier
 	StatePath string
+	ReadOnly  bool // dry runs read seen.json but never update it
 	MaxSend   int
 	Verbose   bool
 }
@@ -211,8 +212,10 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 	}
 	log.Printf("checked %d targets, %d candidate(s), %d alert(s) sent", len(r.Cfg.Targets), len(byID), sent)
 
-	if err := store.Save(now); err != nil {
-		return err
+	if !r.ReadOnly {
+		if err := store.Save(now); err != nil {
+			return err
+		}
 	}
 	if len(searchErrs) > 0 {
 		return fmt.Errorf("some searches failed:\n  %s", strings.Join(searchErrs, "\n  "))

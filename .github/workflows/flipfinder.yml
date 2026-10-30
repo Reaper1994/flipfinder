@@ -11,6 +11,10 @@ on:
         description: "Dry run: print deals in the log, send nothing to Telegram"
         type: boolean
         default: true
+      reset_seen:
+        description: "Forget previously alerted listings, so current deals are sent again"
+        type: boolean
+        default: false
       ping:
         description: "Only test Telegram and the Jev key (skips the eBay scan)"
         type: boolean
@@ -38,6 +42,10 @@ jobs:
           path: seen.json
           key: seen-${{ github.run_id }}
           restore-keys: seen-
+
+      - name: Forget seen listings
+        if: ${{ inputs.reset_seen }}
+        run: rm -f seen.json
 
       - name: Scan eBay
         env:
