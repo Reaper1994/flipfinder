@@ -33,7 +33,7 @@ concurrency:
 
 jobs:
   scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Check scan hours
@@ -62,18 +62,19 @@ jobs:
           echo "UK hour $hour, SCAN_HOURS='$spec' → scan=$run"
           echo "run=$run" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.check.outputs.run == 'true'
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         if: steps.check.outputs.run == 'true'
         with:
           go-version-file: go.mod
+          cache: false # no third-party dependencies, so no go.sum to key a cache on
 
       # Remember which listings were already alerted between runs.
       - name: Restore seen listings
         if: steps.check.outputs.run == 'true'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: seen.json
           key: seen-${{ github.run_id }}
@@ -96,7 +97,7 @@ jobs:
 
       - name: Save seen listings
         if: always() && steps.check.outputs.run == 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: seen.json
           key: seen-${{ github.run_id }}
