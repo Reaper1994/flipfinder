@@ -27,6 +27,9 @@ type Deal struct {
 	Flags   []string // human-readable warnings and highlights
 	Verdict string   // set by the Jev check, if enabled
 	Score   float64  // ranking: higher is better
+	Caution bool     // something needs a human look before buying
+
+	Rank, Total int // position in this run's alerts, e.g. 2 of 5
 }
 
 // Evaluate applies the cheap, deterministic rules. It returns ok=false with a
@@ -78,6 +81,7 @@ func Evaluate(cfg Config, t Target, l Listing, typo bool, now time.Time) (Deal, 
 	d.Shipping, ok = cheapestShipping(l)
 	if !ok {
 		d.Flags = append(d.Flags, "📍 collection or calculated postage — check")
+		d.Caution = true
 	}
 	d.Cost = d.Price + d.Shipping
 
@@ -102,6 +106,7 @@ func Evaluate(cfg Config, t Target, l Listing, typo bool, now time.Time) (Deal, 
 		pct, _ := strconv.ParseFloat(s.FeedbackPercentage, 64)
 		if s.FeedbackScore < 10 || (pct > 0 && pct < 97) {
 			d.Flags = append(d.Flags, fmt.Sprintf("⚠️ low-feedback seller (%d, %.1f%%) — pay through eBay only", s.FeedbackScore, pct))
+			d.Caution = true
 		}
 	}
 

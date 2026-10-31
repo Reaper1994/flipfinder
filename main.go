@@ -180,6 +180,7 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 			a, err := r.Check.Check(ctx, targets[d.Target], d)
 			if err != nil {
 				d.Verdict = "⚪ Jev check failed — review it yourself"
+				d.Caution = true
 				kept = append(kept, d)
 				continue
 			}
@@ -192,14 +193,25 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 				continue
 			}
 			d.Verdict, d.Score = verdict, d.Score*mult
+			d.Caution = d.Caution || mult < 1
 			kept = append(kept, d)
 		}
 		deals = kept
 	}
 
 	sort.Slice(deals, func(i, j int) bool { return deals[i].Score > deals[j].Score })
+	held := 0
 	if len(deals) > r.MaxSend {
+		held = len(deals) - r.MaxSend
 		deals = deals[:r.MaxSend]
+	}
+	for i := range deals {
+		deals[i].Rank, deals[i].Total = i+1, len(deals)
+	}
+	if len(deals) > 0 {
+		if err := r.Notify.SendIndex(ctx, deals, held); err != nil {
+			log.Print(err)
+		}
 	}
 	sent := 0
 	for _, d := range deals {
