@@ -426,6 +426,164 @@
         "burn",
         "dead pixel"
       ]
+    },
+    {
+      "name": "Fujifilm X-T10 (beginner camera, under \u00a3200)",
+      "queries": [
+        "fujifilm x-t10",
+        "fuji xt10"
+      ],
+      "typo_queries": [
+        "fujfilm xt10",
+        "fuji x t10",
+        "fugifilm xt10"
+      ],
+      "market_price": 300,
+      "max_buy_ratio": 0.66,
+      "min_profit": 50,
+      "min_price": 90,
+      "require_any": [
+        "x-t10",
+        "xt10",
+        "x t10"
+      ],
+      "exclude": [
+        "x-t100",
+        "xt100",
+        "x t100",
+        "x-t20",
+        "xt20",
+        "lens only",
+        "body cap",
+        "battery only",
+        "charger only",
+        "strap only",
+        "bag only",
+        "screen protector",
+        "instax",
+        "grip only",
+        "cage",
+        "l bracket",
+        "half case",
+        "manual only"
+      ]
+    },
+    {
+      "name": "Fujifilm X-E2 / X-E2S (beginner camera, under \u00a3200)",
+      "queries": [
+        "fujifilm x-e2",
+        "fuji xe2s"
+      ],
+      "typo_queries": [
+        "fujfilm xe2",
+        "fuji x e2",
+        "fugifilm xe2"
+      ],
+      "market_price": 280,
+      "max_buy_ratio": 0.7,
+      "min_profit": 45,
+      "min_price": 90,
+      "require_any": [
+        "x-e2",
+        "xe2",
+        "x e2"
+      ],
+      "exclude": [
+        "x-e3",
+        "xe3",
+        "x-e4",
+        "xe4",
+        "lens only",
+        "body cap",
+        "battery only",
+        "charger only",
+        "strap only",
+        "bag only",
+        "screen protector",
+        "instax",
+        "grip only",
+        "cage",
+        "l bracket",
+        "half case",
+        "manual only"
+      ]
+    },
+    {
+      "name": "Fujifilm X-A5 / X-A3 (beginner camera, under \u00a3200)",
+      "queries": [
+        "fujifilm x-a5",
+        "fujifilm x-a3"
+      ],
+      "typo_queries": [
+        "fuji xa5",
+        "fuji xa3",
+        "fujfilm xa5"
+      ],
+      "market_price": 230,
+      "max_buy_ratio": 0.85,
+      "min_profit": 35,
+      "min_price": 70,
+      "require_any": [
+        "x-a5",
+        "xa5",
+        "x a5",
+        "x-a3",
+        "xa3",
+        "x a3"
+      ],
+      "exclude": [
+        "x-a7",
+        "xa7",
+        "lens only",
+        "body cap",
+        "battery only",
+        "charger only",
+        "strap only",
+        "bag only",
+        "screen protector",
+        "instax",
+        "grip only",
+        "cage",
+        "l bracket",
+        "half case",
+        "manual only"
+      ]
+    },
+    {
+      "name": "Fujifilm X-M1 (beginner camera, under \u00a3200)",
+      "queries": [
+        "fujifilm x-m1"
+      ],
+      "typo_queries": [
+        "fuji xm1",
+        "fujfilm x m1"
+      ],
+      "market_price": 190,
+      "max_buy_ratio": 0.75,
+      "min_profit": 30,
+      "min_price": 60,
+      "require_any": [
+        "x-m1",
+        "xm1",
+        "x m1"
+      ],
+      "exclude": [
+        "x-m5",
+        "xm5",
+        "lens only",
+        "body cap",
+        "battery only",
+        "charger only",
+        "strap only",
+        "bag only",
+        "screen protector",
+        "instax",
+        "grip only",
+        "cage",
+        "l bracket",
+        "half case",
+        "manual only"
+      ]
     }
   ]
 }
