@@ -165,4 +165,35 @@ func TestDryRunDoesNotUseUpAlerts(t *testing.T) {
 	}
 }
 
-
+func TestPS5TargetKeepsConsolesDropsExtras(t *testing.T) {
+	cfg, err := LoadConfig("watchlist.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ps5 Target
+	for _, tg := range cfg.Targets {
+		if tg.Name == "PS5 console" {
+			ps5 = tg
+		}
+	}
+	if ps5.Name == "" {
+		t.Fatal("PS5 target missing")
+	}
+	now := time.Now()
+	cases := []struct {
+		title, price string
+		keep         bool
+	}{
+		{"Sony PlayStation 5 Slim Disc Edition 1TB console, boxed", "220", true},
+		{"Playstaion 5 digital edition console good condition", "200", true},
+		{"PS5 Pro console 2TB boxed", "250", false},
+		{"PS5 DualSense controller white", "160", false},
+		{"PlayStation Portal remote player for PS5", "160", false},
+	}
+	for _, c := range cases {
+		_, ok, why := Evaluate(cfg, ps5, listing(c.title, c.price), false, now)
+		if ok != c.keep {
+			t.Errorf("%q: kept=%v want %v (%s)", c.title, ok, c.keep, why)
+		}
+	}
+}

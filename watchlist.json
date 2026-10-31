@@ -202,6 +202,60 @@
       ]
     },
     {
+      "name": "PS5 console",
+      "queries": [
+        "ps5 console",
+        "playstation 5 console",
+        "ps5 slim console"
+      ],
+      "typo_queries": [
+        "playstaion 5",
+        "play station 5 console",
+        "ps 5 console",
+        "plastation 5"
+      ],
+      "market_price": 340,
+      "max_buy_ratio": 0.8,
+      "min_profit": 40,
+      "min_price": 150,
+      "require_any": [
+        "ps5",
+        "ps 5",
+        "playstation 5",
+        "play station 5",
+        "playstaion 5",
+        "plastation 5"
+      ],
+      "exclude": [
+        "ps5 pro",
+        "ps 5 pro",
+        "playstation 5 pro",
+        "ps4",
+        "portal",
+        "faceplate",
+        "face plate",
+        "cover",
+        "covers",
+        "disc drive only",
+        "disk drive only",
+        "vr2",
+        "vr 2",
+        "controller",
+        "dualsense",
+        "edge",
+        "headset",
+        "game only",
+        "games only",
+        "for ps5",
+        "for playstation 5",
+        "stand",
+        "cooling",
+        "charging",
+        "dock",
+        "case"
+      ]
+    },
+    {
       "name": "Nintendo Switch 2 console",
       "queries": [
         "nintendo switch 2 console",
