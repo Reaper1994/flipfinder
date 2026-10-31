@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -121,6 +122,8 @@ type countingNotifier struct{ n int }
 
 func (c *countingNotifier) Send(context.Context, Deal) error { c.n++; return nil }
 
+func (c *countingNotifier) SendIndex(context.Context, []Deal, int) error { return nil }
+
 func TestDemoRunAlertsOnceOnly(t *testing.T) {
 	cfg, err := LoadConfig("testdata/demo-watchlist.json")
 	if err != nil {
@@ -194,6 +197,53 @@ func TestPS5TargetKeepsConsolesDropsExtras(t *testing.T) {
 		_, ok, why := Evaluate(cfg, ps5, listing(c.title, c.price), false, now)
 		if ok != c.keep {
 			t.Errorf("%q: kept=%v want %v (%s)", c.title, ok, c.keep, why)
+		}
+	}
+}
+
+func formatFixture() Deal {
+	return Deal{Target: "PS5 <console>", Rank: 2, Total: 3, Price: 210, Cost: 210, Resale: 290, Profit: 80, ROI: 0.38, Score: 110,
+		Verdict: "✅ looks genuine",
+		Listing: Listing{Title: "PS5 & pad", ItemWebURL: "https://ebay.test/1?a=1&b=2"}}
+}
+
+func TestAdvice(t *testing.T) {
+	d := formatFixture()
+	if _, got := advice(d); got != "Buy" {
+		t.Errorf("clean deal: got %q", got)
+	}
+	d.Auction = true
+	if _, got := advice(d); got != "Bid" {
+		t.Errorf("auction: got %q", got)
+	}
+	d.Caution = true
+	if _, got := advice(d); got != "Check first" {
+		t.Errorf("caution: got %q", got)
+	}
+	d = formatFixture()
+	d.Verdict = ""
+	if _, got := advice(d); got != "Check first" {
+		t.Errorf("unchecked by Jev: got %q", got)
+	}
+}
+
+func TestFormatDealHTML(t *testing.T) {
+	got := formatDeal(formatFixture(), true)
+	for _, want := range []string{
+		"<b>#2/3 · 🟢 Buy · PS5 &lt;console&gt;</b>", "PS5 &amp; pad", "<pre>Price     £210.00\n",
+		"Postage   check", "Score     110", "Advice    Buy</pre>", `href="https://ebay.test/1?a=1&amp;b=2"`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in:\n%s", want, got)
+		}
+	}
+}
+
+func TestFormatIndex(t *testing.T) {
+	got := formatIndex([]Deal{formatFixture()}, 2, true)
+	for _, want := range []string{"1 new deal</b>", "2. 🟢 Buy · <a href=", "~£80 profit · score 110", "+2 more next run"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in:\n%s", want, got)
 		}
 	}
 }

@@ -15,9 +15,12 @@ import (
 
 type Notifier interface {
 	Send(ctx context.Context, d Deal) error
+	// SendIndex lists a run's deals ahead of the alerts; held is how many more
+	// qualified but were over the per-run limit.
+	SendIndex(ctx context.Context, deals []Deal, held int) error
 }
 
-// Telegram sends one message per deal to your chat via a bot.
+// Telegram sends an index for each run, then one message per deal, to your chat via a bot.
 type Telegram struct {
 	Token, ChatID string
 	HTTP          *http.Client
@@ -29,6 +32,10 @@ func NewTelegram(token, chatID string) *Telegram {
 
 func (t *Telegram) Send(ctx context.Context, d Deal) error {
 	return t.SendText(ctx, formatDeal(d, true))
+}
+
+func (t *Telegram) SendIndex(ctx context.Context, deals []Deal, held int) error {
+	return t.SendText(ctx, formatIndex(deals, held, true))
 }
 
 // SendText sends one HTML-formatted message, e.g. a -ping test.
@@ -65,6 +72,24 @@ func (Console) Send(_ context.Context, d Deal) error {
 	return nil
 }
 
+func (Console) SendIndex(_ context.Context, deals []Deal, held int) error {
+	fmt.Println(formatIndex(deals, held, false))
+	fmt.Println(strings.Repeat("═", 60))
+	return nil
+}
+
+// advice is the one-word call shown on each alert. Anything with a warning, or
+// that Jev hasn't confirmed, needs a human look before buying.
+func advice(d Deal) (icon, label string) {
+	switch {
+	case d.Caution || d.Verdict == "":
+		return "🟡", "Check first"
+	case d.Auction:
+		return "🟢", "Bid"
+	}
+	return "🟢", "Buy"
+}
+
 func formatDeal(d Deal, htmlMode bool) string {
 	esc := func(s string) string {
 		if htmlMode {
@@ -72,27 +97,50 @@ func formatDeal(d Deal, htmlMode bool) string {
 		}
 		return s
 	}
-	bold := func(s string) string {
-		if htmlMode {
-			return "<b>" + esc(s) + "</b>"
-		}
-		return s
+	icon, label := advice(d)
+	head := fmt.Sprintf("#%d/%d · %s %s · %s", d.Rank, d.Total, icon, label, d.Target)
+	if htmlMode {
+		head = "<b>" + esc(head) + "</b>"
 	}
-	var b strings.Builder
-	fmt.Fprintf(&b, "%s  ~£%.0f profit (%.0f%% ROI)\n", bold("💷 "+d.Target), d.Profit, d.ROI*100)
-	fmt.Fprintf(&b, "%s\n", esc(d.Listing.Title))
-	cost := fmt.Sprintf("Buy £%.2f", d.Price)
-	if d.Shipping > 0 {
-		cost += fmt.Sprintf(" + £%.2f post", d.Shipping)
+
+	priceLabel, postage := "Price", fmt.Sprintf("£%.2f", d.Shipping)
+	if d.Auction {
+		priceLabel = "Bid"
 	}
-	fmt.Fprintf(&b, "%s → resell ~£%.0f\n", cost, d.Resale)
+	if _, ok := cheapestShipping(d.Listing); !ok {
+		postage = "check"
+	}
+	rows := [][2]string{
+		{priceLabel, fmt.Sprintf("£%.2f", d.Price)},
+		{"Postage", postage},
+		{"Total", fmt.Sprintf("£%.2f", d.Cost)},
+		{"Resale", fmt.Sprintf("~£%.0f", d.Resale)},
+		{"Profit", fmt.Sprintf("~£%.0f (%.0f%% ROI)", d.Profit, d.ROI*100)},
+		{"Score", fmt.Sprintf("%.0f", d.Score)},
+		{"Advice", label},
+	}
 	if c := d.Listing.Condition; c != "" {
-		fmt.Fprintf(&b, "Condition: %s", esc(c))
-		if loc := d.Listing.ItemLocation; loc != nil && loc.City != "" {
-			fmt.Fprintf(&b, " · %s", esc(loc.City))
-		}
-		b.WriteString("\n")
+		rows = append(rows, [2]string{"Condition", c})
 	}
+	if loc := d.Listing.ItemLocation; loc != nil && loc.City != "" {
+		rows = append(rows, [2]string{"Location", loc.City})
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s\n%s\n", head, esc(d.Listing.Title))
+	if htmlMode {
+		b.WriteString("<pre>")
+	}
+	for i, r := range rows {
+		if i > 0 {
+			b.WriteString("\n")
+		}
+		fmt.Fprintf(&b, "%-9s %s", r[0], esc(r[1]))
+	}
+	if htmlMode {
+		b.WriteString("</pre>")
+	}
+	b.WriteString("\n")
 	if d.Verdict != "" {
 		fmt.Fprintf(&b, "%s\n", esc(d.Verdict))
 	}
@@ -103,6 +151,34 @@ func formatDeal(d Deal, htmlMode bool) string {
 		fmt.Fprintf(&b, `<a href="%s">Open on eBay</a>`, html.EscapeString(d.Listing.ItemWebURL))
 	} else {
 		b.WriteString(d.Listing.ItemWebURL)
+	}
+	return b.String()
+}
+
+// formatIndex is the contents page for a run: one numbered entry per alert,
+// using the same numbers, in the same order.
+func formatIndex(deals []Deal, held int, htmlMode bool) string {
+	noun := "deals"
+	if len(deals) == 1 {
+		noun = "deal"
+	}
+	head := fmt.Sprintf("🔎 flipfinder: %d new %s", len(deals), noun)
+	var b strings.Builder
+	if htmlMode {
+		head = "<b>" + html.EscapeString(head) + "</b>"
+	}
+	b.WriteString(head)
+	for _, d := range deals {
+		icon, label := advice(d)
+		name := d.Target
+		if htmlMode {
+			name = fmt.Sprintf(`<a href="%s">%s</a>`, html.EscapeString(d.Listing.ItemWebURL), html.EscapeString(d.Target))
+		}
+		fmt.Fprintf(&b, "\n\n%d. %s %s · %s\n£%.0f total · ~£%.0f profit · score %.0f",
+			d.Rank, icon, label, name, d.Cost, d.Profit, d.Score)
+	}
+	if held > 0 {
+		fmt.Fprintf(&b, "\n\n+%d more next run", held)
 	}
 	return b.String()
 }
