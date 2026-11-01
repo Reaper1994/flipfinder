@@ -88,6 +88,9 @@ func Evaluate(cfg Config, t Target, l Listing, typo bool, now time.Time) (Deal, 
 	if d.Cost < t.MinPrice {
 		return Deal{}, false, "too cheap: probably an accessory, box or wanted ad"
 	}
+	if !d.Auction && d.Cost < t.MarketPrice*cfg.SuspiciousBelow {
+		return Deal{}, false, "suspiciously cheap: likely fake, scam or mislisted"
+	}
 	if d.Cost > t.MarketPrice*t.MaxBuyRatio {
 		return Deal{}, false, "not cheap enough"
 	}

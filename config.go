@@ -20,6 +20,11 @@ type Config struct {
 	// on eBay or local Facebook sales; set e.g. 0.13 if you sell as a business).
 	SellFeePct float64 `json:"sell_fee_pct"`
 
+	// Buy It Now listings below this fraction of market price are almost always
+	// fakes, scams or mislisted parts (e.g. a "sealed 4TB SSD" for a third of
+	// the going rate). Default 0.45; auctions are exempt as bids start low.
+	SuspiciousBelow float64 `json:"suspicious_below"`
+
 	GlobalExclude []string `json:"global_exclude"`
 	Targets       []Target `json:"targets"`
 }
@@ -60,6 +65,9 @@ func LoadConfig(path string) (Config, error) {
 	}
 	if c.AuctionMaxHoursLeft == 0 {
 		c.AuctionMaxHoursLeft = 3
+	}
+	if c.SuspiciousBelow == 0 {
+		c.SuspiciousBelow = 0.45
 	}
 	if c.AuctionMaxBids == 0 {
 		c.AuctionMaxBids = 3

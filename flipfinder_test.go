@@ -247,3 +247,54 @@ func TestFormatIndex(t *testing.T) {
 		}
 	}
 }
+
+func findTarget(t *testing.T, cfg Config, prefix string) Target {
+	t.Helper()
+	for _, tg := range cfg.Targets {
+		if strings.HasPrefix(tg.Name, prefix) {
+			return tg
+		}
+	}
+	t.Fatalf("no target %q", prefix)
+	return Target{}
+}
+
+func TestThuleBikeCarrierFilters(t *testing.T) {
+	cfg, err := LoadConfig("watchlist.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now()
+	cases := []struct {
+		target, title, price string
+		keep                 bool
+	}{
+		{"Thule towbar", "Thule EasyFold XT 2 towbar bike carrier, all parts included", "250", true},
+		{"Thule towbar", "Thule VeloCompact 927 3 bike tow bar rack", "220", true},
+		{"Thule towbar", "Thule Motion XT L roof box", "250", false},
+		{"Thule towbar", "Thule VeloSpace XT bike extension", "150", false},
+		{"Thule towbar", "Thule Chariot Cross 2 pushchair", "250", false},
+		{"Thule roof", "Thule ProRide 598 roof mounted bike carrier", "70", true},
+		{"Thule roof", "Thule ProRide 598 spare parts wheel holder", "50", false},
+		{"Thule boot", "Thule OutWay 2 bike boot mounted carrier", "100", true},
+	}
+	for _, c := range cases {
+		tg := findTarget(t, cfg, c.target)
+		_, ok, why := Evaluate(cfg, tg, listing(c.title, c.price), false, now)
+		if ok != c.keep {
+			t.Errorf("%s / %q: kept=%v (%s), want %v", c.target, c.title, ok, why, c.keep)
+		}
+	}
+}
+
+func TestSuspiciouslyCheapBuyItNowIsSkipped(t *testing.T) {
+	cfg, err := LoadConfig("watchlist.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ssd := findTarget(t, cfg, "NVMe SSD 4TB")
+	_, ok, why := Evaluate(cfg, ssd, listing("WD_BLACK SN850X 4TB NVMe SSD new sealed", "138"), false, time.Now())
+	if ok || !strings.HasPrefix(why, "suspiciously cheap") {
+		t.Errorf("£138 4TB SSD: kept=%v (%s), want suspiciously cheap", ok, why)
+	}
+}

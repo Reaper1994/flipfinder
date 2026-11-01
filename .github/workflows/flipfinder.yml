@@ -93,7 +93,8 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-        run: go run . -config watchlist.json -state seen.json ${{ inputs.ping && '-ping' || (inputs.dry && '-dry -v' || '') }}
+          MAX_ALERTS: ${{ vars.MAX_ALERTS }} # alerts per run; default 20
+        run: go run . -config watchlist.json -state seen.json -max "${MAX_ALERTS:-20}" ${{ inputs.ping && '-ping' || (inputs.dry && '-dry -v' || '') }}
 
       - name: Save seen listings
         if: always() && steps.check.outputs.run == 'true'
