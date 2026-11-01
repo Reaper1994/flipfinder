@@ -428,7 +428,7 @@
       ]
     },
     {
-      "name": "Fujifilm X-T10 (beginner camera, under \u00a3200)",
+      "name": "Fujifilm X-T10 (beginner camera, under £200)",
       "queries": [
         "fujifilm x-t10",
         "fuji xt10"
@@ -469,7 +469,7 @@
       ]
     },
     {
-      "name": "Fujifilm X-E2 / X-E2S (beginner camera, under \u00a3200)",
+      "name": "Fujifilm X-E2 / X-E2S (beginner camera, under £200)",
       "queries": [
         "fujifilm x-e2",
         "fuji xe2s"
@@ -509,7 +509,7 @@
       ]
     },
     {
-      "name": "Fujifilm X-A5 / X-A3 (beginner camera, under \u00a3200)",
+      "name": "Fujifilm X-A5 / X-A3 (beginner camera, under £200)",
       "queries": [
         "fujifilm x-a5",
         "fujifilm x-a3"
@@ -550,7 +550,7 @@
       ]
     },
     {
-      "name": "Fujifilm X-M1 (beginner camera, under \u00a3200)",
+      "name": "Fujifilm X-M1 (beginner camera, under £200)",
       "queries": [
         "fujifilm x-m1"
       ],
@@ -583,6 +583,105 @@
         "l bracket",
         "half case",
         "manual only"
+      ]
+    },
+    {
+      "name": "Thule towbar bike rack (EasyFold, VeloCompact, VeloSpace, Epos)",
+      "queries": [
+        "thule easyfold",
+        "thule velocompact",
+        "thule velospace",
+        "thule epos",
+        "thule towbar bike rack"
+      ],
+      "typo_queries": [
+        "thule easy fold",
+        "thule velo compact",
+        "thule velo space",
+        "thule tow bar bike carrier",
+        "thul bike rack"
+      ],
+      "market_price": 380,
+      "max_buy_ratio": 0.7,
+      "min_profit": 60,
+      "min_price": 120,
+      "require_any": [
+        "thule"
+      ],
+      "exclude": [
+        "adapter only",
+        "lock only",
+        "key only",
+        "keys only",
+        "strap",
+        "straps only",
+        "light board",
+        "lighting board",
+        "number plate",
+        "wheel holder",
+        "wheel tray",
+        "frame holder",
+        "spare",
+        "parts",
+        "fitting kit",
+        "replacement",
+        "bag only",
+        "carry bag",
+        "roof",
+        "proride",
+        "pro ride",
+        "boot mount",
+        "clipon",
+        "clip on"
+      ]
+    },
+    {
+      "name": "Thule ProRide roof bike carrier",
+      "queries": [
+        "thule proride",
+        "thule pro ride 598",
+        "thule roof bike carrier"
+      ],
+      "typo_queries": [
+        "thule proride 598",
+        "thule pro-ride",
+        "thule roof bike rack"
+      ],
+      "market_price": 110,
+      "max_buy_ratio": 0.7,
+      "min_profit": 25,
+      "min_price": 45,
+      "require_any": [
+        "proride",
+        "pro ride",
+        "pro-ride",
+        "roof"
+      ],
+      "exclude": [
+        "adapter only",
+        "lock only",
+        "key only",
+        "keys only",
+        "strap",
+        "straps only",
+        "light board",
+        "lighting board",
+        "number plate",
+        "wheel holder",
+        "wheel tray",
+        "frame holder",
+        "spare",
+        "parts",
+        "fitting kit",
+        "replacement",
+        "bag only",
+        "carry bag",
+        "towbar",
+        "tow bar",
+        "roof bars only",
+        "foot pack",
+        "footpack",
+        "wingbar only"
       ]
     }
   ]
