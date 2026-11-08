@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 )
 
 // Config is loaded from watchlist.json. Secrets come from the environment.
@@ -55,7 +55,7 @@ func LoadConfig(path string) (Config, error) {
 		return Config{}, err
 	}
 	var c Config
-	dec := json.NewDecoder(strings.NewReader(string(b)))
+	dec := json.NewDecoder(bytes.NewReader(b))
 	dec.DisallowUnknownFields() // catch typos in the watchlist
 	if err := dec.Decode(&c); err != nil {
 		return Config{}, fmt.Errorf("%s: %w", path, err)

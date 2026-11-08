@@ -18,3 +18,15 @@ func BenchmarkEvaluate(b *testing.B) {
 		Evaluate(cfg, t, l, false, now)
 	}
 }
+
+func BenchmarkJevPayload(b *testing.B) {
+	j := &Jev{Model: "jev-latest"}
+	t := Target{Name: "PS5 console", MarketPrice: 320}
+	d := Deal{Price: 210, Listing: listing("Sony PlayStation 5 Disc Edition console, boxed with controller", "210")}
+	b.ReportAllocs()
+	for b.Loop() {
+		if _, err := j.payload(t, d); err != nil {
+			b.Fatal(err)
+		}
+	}
+}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -296,5 +297,24 @@ func TestSuspiciouslyCheapBuyItNowIsSkipped(t *testing.T) {
 	_, ok, why := Evaluate(cfg, ssd, listing("WD_BLACK SN850X 4TB NVMe SSD new sealed", "138"), false, time.Now())
 	if ok || !strings.HasPrefix(why, "suspiciously cheap") {
 		t.Errorf("£138 4TB SSD: kept=%v (%s), want suspiciously cheap", ok, why)
+	}
+}
+
+func TestJevPayload(t *testing.T) {
+	j := &Jev{Model: "m"}
+	b, err := j.payload(ps5, Deal{Price: 210, Listing: listing("PS5", "210")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got struct {
+		State     map[string]any            `json:"state"`
+		Model     string                    `json:"model"`
+		Questions map[string]map[string]any `json:"questions"`
+	}
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Model != "m" || got.State["target_product"] != "PS5" || len(got.Questions) != len(jevQuestions) {
+		t.Errorf("unexpected payload: %s", b)
 	}
 }

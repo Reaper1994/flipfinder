@@ -81,20 +81,17 @@ var jevQuestions = map[string]any{
 	},
 }
 
-func (j *Jev) Check(ctx context.Context, t Target, d Deal) (ListingAnswers, error) {
-	l := d.Listing
-	state := map[string]any{
-		"target_product":  t.Name,
-		"typical_resale":  fmt.Sprintf("£%.0f", t.MarketPrice),
-		"title":           sanitize(l.Title),
-		"description":     sanitize(l.ShortDescription),
-		"condition":       l.Condition,
-		"price":           fmt.Sprintf("£%.2f", d.Price),
-		"is_auction":      d.Auction,
-		"seller_feedback": sellerFeedback(l),
-		"listed":          l.ItemCreationDate,
+// jevQuestionsJSON is the fixed question set, encoded once.
+var jevQuestionsJSON = func() json.RawMessage {
+	b, err := json.Marshal(jevQuestions)
+	if err != nil {
+		panic(err)
 	}
-	payload, err := json.Marshal(map[string]any{"state": state, "model": j.Model, "questions": jevQuestions})
+	return b
+}()
+
+func (j *Jev) Check(ctx context.Context, t Target, d Deal) (ListingAnswers, error) {
+	payload, err := j.payload(t, d)
 	if err != nil {
 		return ListingAnswers{}, err
 	}
@@ -117,6 +114,27 @@ func (j *Jev) Check(ctx context.Context, t Target, d Deal) (ListingAnswers, erro
 		}
 	}
 	return a, nil
+}
+
+// payload builds the request body for one listing.
+func (j *Jev) payload(t Target, d Deal) ([]byte, error) {
+	l := d.Listing
+	state := map[string]any{
+		"target_product":  t.Name,
+		"typical_resale":  fmt.Sprintf("£%.0f", t.MarketPrice),
+		"title":           sanitize(l.Title),
+		"description":     sanitize(l.ShortDescription),
+		"condition":       l.Condition,
+		"price":           fmt.Sprintf("£%.2f", d.Price),
+		"is_auction":      d.Auction,
+		"seller_feedback": sellerFeedback(l),
+		"listed":          l.ItemCreationDate,
+	}
+	return json.Marshal(struct {
+		State     map[string]any  `json:"state"`
+		Model     string          `json:"model"`
+		Questions json.RawMessage `json:"questions"`
+	}{state, j.Model, jevQuestionsJSON})
 }
 
 // Decide applies the buying policy to Jev's answers. It returns whether to
