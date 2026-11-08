@@ -4,13 +4,14 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 )
@@ -240,7 +241,15 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 		deals = kept
 	}
 
-	sort.Slice(deals, func(i, j int) bool { return deals[i].Score > deals[j].Score })
+	// Ties are broken by item ID: deals come from a map, so without a total
+	// order equal-score deals could swap places (and which ones are held back
+	// by MaxSend) from run to run.
+	slices.SortFunc(deals, func(a, b Deal) int {
+		if c := cmp.Compare(b.Score, a.Score); c != 0 {
+			return c
+		}
+		return strings.Compare(a.Listing.ItemID, b.Listing.ItemID)
+	})
 	held := 0
 	if len(deals) > r.MaxSend {
 		held = len(deals) - r.MaxSend

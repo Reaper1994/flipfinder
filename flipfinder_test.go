@@ -352,3 +352,38 @@ func (c *recordingNotifier) Send(_ context.Context, d Deal) error {
 }
 
 func (c *recordingNotifier) SendIndex(context.Context, []Deal, int) error { return nil }
+
+// Equal-score deals must be ordered the same way on every run.
+func TestRunOnceTieOrderIsStable(t *testing.T) {
+	cfg := testCfg
+	cfg.Targets = []Target{{Name: "PS5", Queries: []string{"ps5"}, MarketPrice: 320, MaxBuyRatio: 0.8, MinProfit: 40, MinPrice: 140}}
+	var want string
+	for i := 0; i < 20; i++ {
+		n := &recordingNotifier{}
+		r := &Runner{Cfg: cfg, Search: tiedSearcher{}, Notify: n, ReadOnly: true, MaxSend: 10}
+		if err := r.RunOnce(context.Background(), time.Now()); err != nil {
+			t.Fatal(err)
+		}
+		got := strings.Join(n.ids, ",")
+		if i == 0 {
+			want = got
+		} else if got != want {
+			t.Fatalf("run %d order %s, first run %s", i, got, want)
+		}
+	}
+	if want != "a,b,c,d,e,f" {
+		t.Errorf("order = %s, want ties sorted by item ID", want)
+	}
+}
+
+type tiedSearcher struct{}
+
+func (tiedSearcher) Search(context.Context, string, float64) ([]Listing, error) {
+	var out []Listing
+	for _, id := range []string{"f", "e", "d", "c", "b", "a"} {
+		l := listing("PS5 console", "230.00")
+		l.ItemID = id
+		out = append(out, l)
+	}
+	return out, nil
+}
