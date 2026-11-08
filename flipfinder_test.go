@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -248,7 +249,7 @@ func TestFormatIndex(t *testing.T) {
 	}
 }
 
-func findTarget(t *testing.T, cfg Config, prefix string) Target {
+func findTarget(t testing.TB, cfg Config, prefix string) Target {
 	t.Helper()
 	for _, tg := range cfg.Targets {
 		if strings.HasPrefix(tg.Name, prefix) {
@@ -297,4 +298,92 @@ func TestSuspiciouslyCheapBuyItNowIsSkipped(t *testing.T) {
 	if ok || !strings.HasPrefix(why, "suspiciously cheap") {
 		t.Errorf("£138 4TB SSD: kept=%v (%s), want suspiciously cheap", ok, why)
 	}
+}
+
+func TestJevPayload(t *testing.T) {
+	j := &Jev{Model: "m"}
+	b, err := j.payload(ps5, Deal{Price: 210, Listing: listing("PS5", "210")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got struct {
+		State     map[string]any            `json:"state"`
+		Model     string                    `json:"model"`
+		Questions map[string]map[string]any `json:"questions"`
+	}
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Model != "m" || got.State["target_product"] != "PS5" || len(got.Questions) != len(jevQuestions) {
+		t.Errorf("unexpected payload: %s", b)
+	}
+}
+
+// Results must not depend on how many searches run at once.
+func TestRunOnceSameResultAnyConcurrency(t *testing.T) {
+	cfg, err := LoadConfig("testdata/demo-watchlist.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var want []string
+	for _, workers := range []int{1, 8} {
+		n := &recordingNotifier{}
+		r := &Runner{Cfg: cfg, Search: demoSearcher{}, Check: demoChecker{}, Notify: n,
+			ReadOnly: true, MaxSend: 10, SearchWorkers: workers, CheckWorkers: workers}
+		if err := r.RunOnce(context.Background(), time.Now()); err != nil {
+			t.Fatal(err)
+		}
+		if want == nil {
+			want = n.ids
+		} else if strings.Join(n.ids, ",") != strings.Join(want, ",") {
+			t.Errorf("workers=%d sent %v, want %v", workers, n.ids, want)
+		}
+	}
+	if len(want) == 0 {
+		t.Fatal("no alerts sent")
+	}
+}
+
+type recordingNotifier struct{ ids []string }
+
+func (c *recordingNotifier) Send(_ context.Context, d Deal) error {
+	c.ids = append(c.ids, d.Listing.ItemID)
+	return nil
+}
+
+func (c *recordingNotifier) SendIndex(context.Context, []Deal, int) error { return nil }
+
+// Equal-score deals must be ordered the same way on every run.
+func TestRunOnceTieOrderIsStable(t *testing.T) {
+	cfg := testCfg
+	cfg.Targets = []Target{{Name: "PS5", Queries: []string{"ps5"}, MarketPrice: 320, MaxBuyRatio: 0.8, MinProfit: 40, MinPrice: 140}}
+	var want string
+	for i := 0; i < 20; i++ {
+		n := &recordingNotifier{}
+		r := &Runner{Cfg: cfg, Search: tiedSearcher{}, Notify: n, ReadOnly: true, MaxSend: 10}
+		if err := r.RunOnce(context.Background(), time.Now()); err != nil {
+			t.Fatal(err)
+		}
+		got := strings.Join(n.ids, ",")
+		if i == 0 {
+			want = got
+		} else if got != want {
+			t.Fatalf("run %d order %s, first run %s", i, got, want)
+		}
+	}
+	if want != "a,b,c,d,e,f" {
+		t.Errorf("order = %s, want ties sorted by item ID", want)
+	}
+}
+
+type tiedSearcher struct{}
+
+func (tiedSearcher) Search(context.Context, string, float64) ([]Listing, error) {
+	var out []Listing
+	for _, id := range []string{"f", "e", "d", "c", "b", "a"} {
+		l := listing("PS5 console", "230.00")
+		l.ItemID = id
+		out = append(out, l)
+	}
+	return out, nil
 }
