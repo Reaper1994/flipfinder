@@ -63,3 +63,30 @@ func BenchmarkRunOnceSearch(b *testing.B) {
 		})
 	}
 }
+
+type slowChecker struct{ delay time.Duration }
+
+func (c slowChecker) Check(ctx context.Context, _ Target, _ Deal) (ListingAnswers, error) {
+	select {
+	case <-time.After(c.delay):
+	case <-ctx.Done():
+		return ListingAnswers{}, ctx.Err()
+	}
+	return ListingAnswers{Matches: jevNoul{1}, Genuine: jevNoul{1}, Condition: jevScore{Score: 2}}, nil
+}
+
+func BenchmarkRunOnceCheck(b *testing.B) {
+	cfg := testCfg
+	cfg.Targets = []Target{{Name: "PS5", Queries: []string{"ps5"}, MarketPrice: 320, MaxBuyRatio: 0.8, MinProfit: 40, MinPrice: 140}}
+	for _, workers := range []int{1, defaultCheckWorkers} {
+		b.Run(fmt.Sprintf("workers=%d", workers), func(b *testing.B) {
+			r := &Runner{Cfg: cfg, Search: tiedSearcher{}, Check: slowChecker{20 * time.Millisecond},
+				Notify: &countingNotifier{}, ReadOnly: true, MaxSend: 8, CheckWorkers: workers}
+			for b.Loop() {
+				if err := r.RunOnce(context.Background(), time.Now()); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
+}

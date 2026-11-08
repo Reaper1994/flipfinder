@@ -217,9 +217,16 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 		for _, t := range r.Cfg.Targets {
 			targets[t.Name] = t
 		}
+		// Checks are independent network calls: run them concurrently, then
+		// apply the verdicts in order (Store is not safe for concurrent use).
+		answers := make([]ListingAnswers, len(deals))
+		errs := make([]error, len(deals))
+		forEach(len(deals), r.checkWorkers(), func(i int) {
+			answers[i], errs[i] = r.Check.Check(ctx, targets[deals[i].Target], deals[i])
+		})
 		kept := deals[:0]
-		for _, d := range deals {
-			a, err := r.Check.Check(ctx, targets[d.Target], d)
+		for i, d := range deals {
+			a, err := answers[i], errs[i]
 			if err != nil {
 				d.Verdict = "⚪ Jev check failed — review it yourself"
 				d.Caution = true
