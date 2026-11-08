@@ -248,7 +248,7 @@ func TestFormatIndex(t *testing.T) {
 	}
 }
 
-func findTarget(t *testing.T, cfg Config, prefix string) Target {
+func findTarget(t testing.TB, cfg Config, prefix string) Target {
 	t.Helper()
 	for _, tg := range cfg.Targets {
 		if strings.HasPrefix(tg.Name, prefix) {

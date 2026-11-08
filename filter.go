@@ -38,9 +38,11 @@ type Deal struct {
 func Evaluate(cfg Config, t Target, l Listing, typo bool, now time.Time) (Deal, bool, string) {
 	title := strings.ToLower(l.Title)
 
-	for _, ex := range append(slices.Clone(cfg.GlobalExclude), t.Exclude...) {
-		if ex != "" && strings.Contains(title, strings.ToLower(ex)) {
-			return Deal{}, false, "excluded word: " + ex
+	for _, words := range [2][]string{cfg.GlobalExclude, t.Exclude} {
+		for _, ex := range words {
+			if ex != "" && strings.Contains(title, strings.ToLower(ex)) {
+				return Deal{}, false, "excluded word: " + ex
+			}
 		}
 	}
 	if len(t.RequireAny) > 0 && !slices.ContainsFunc(t.RequireAny, func(s string) bool {
