@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -153,7 +154,7 @@ func (c *EbayClient) Search(ctx context.Context, query string, maxPrice float64)
 		return nil, err
 	}
 	filter := strings.Join([]string{
-		fmt.Sprintf("price:[..%.0f]", maxPrice),
+		fmt.Sprintf("price:[..%.0f]", math.Ceil(maxPrice)),
 		"priceCurrency:GBP",
 		"itemLocationCountry:GB",
 		"buyingOptions:{FIXED_PRICE|AUCTION|BEST_OFFER}",

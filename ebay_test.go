@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -96,5 +97,24 @@ func TestRetryAfter(t *testing.T) {
 		if got := retryAfter(in, time.Second); got != want {
 			t.Errorf("retryAfter(%q) = %v, want %v", in, got, want)
 		}
+	}
+}
+func TestEbaySearchPriceFilterRoundsUp(t *testing.T) {
+	var filter string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/identity/v1/oauth2/token" {
+			w.Write([]byte(`{"access_token":"tok","expires_in":7200}`))
+			return
+		}
+		filter = r.URL.Query().Get("filter")
+		w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
+	if _, err := c.Search(context.Background(), "ps5", 239.4); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(filter, "price:[..240]") {
+		t.Errorf("filter = %q, want a price cap of 240 so a £239.40 listing is not dropped", filter)
 	}
 }
