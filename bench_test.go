@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -28,5 +30,36 @@ func BenchmarkJevPayload(b *testing.B) {
 		if _, err := j.payload(t, d); err != nil {
 			b.Fatal(err)
 		}
+	}
+}
+
+// slowSearcher imitates network latency so the benchmark shows what bounded
+// concurrency buys over one-at-a-time searching.
+type slowSearcher struct{ delay time.Duration }
+
+func (s slowSearcher) Search(ctx context.Context, q string, _ float64) ([]Listing, error) {
+	select {
+	case <-time.After(s.delay):
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+	return []Listing{listing(q+" console", "220")}, nil
+}
+
+func BenchmarkRunOnceSearch(b *testing.B) {
+	cfg, err := LoadConfig("watchlist.json")
+	if err != nil {
+		b.Fatal(err)
+	}
+	for _, workers := range []int{1, defaultSearchWorkers} {
+		b.Run(fmt.Sprintf("workers=%d", workers), func(b *testing.B) {
+			r := &Runner{Cfg: cfg, Search: slowSearcher{5 * time.Millisecond}, Notify: &countingNotifier{},
+				ReadOnly: true, MaxSend: 8, SearchWorkers: workers}
+			for b.Loop() {
+				if err := r.RunOnce(context.Background(), time.Now()); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
 	}
 }

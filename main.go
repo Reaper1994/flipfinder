@@ -117,6 +117,29 @@ type Runner struct {
 	ReadOnly  bool // dry runs read seen.json but never update it
 	MaxSend   int
 	Verbose   bool
+
+	// SearchWorkers and CheckWorkers bound concurrent eBay searches and Jev
+	// checks. Zero means the default.
+	SearchWorkers, CheckWorkers int
+}
+
+const (
+	defaultSearchWorkers = 4
+	defaultCheckWorkers  = 4
+)
+
+func (r *Runner) searchWorkers() int {
+	if r.SearchWorkers > 0 {
+		return r.SearchWorkers
+	}
+	return defaultSearchWorkers
+}
+
+func (r *Runner) checkWorkers() int {
+	if r.CheckWorkers > 0 {
+		return r.CheckWorkers
+	}
+	return defaultCheckWorkers
 }
 
 func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
@@ -125,40 +148,58 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 		return err
 	}
 
-	byID := map[string]Deal{}
-	var searchErrs []string
-	for _, t := range r.Cfg.Targets {
-		maxPrice := t.MarketPrice * t.MaxBuyRatio
-		// A listing counts as a "typo find" only if normal searches missed it.
-		found := map[string]bool{}
-		run := func(q string, typo bool) {
-			listings, err := r.Search.Search(ctx, q, maxPrice)
-			if err != nil {
-				searchErrs = append(searchErrs, err.Error())
-				return
-			}
-			for _, l := range listings {
-				if found[l.ItemID] { // already seen by an earlier query for this target
-					continue
-				}
-				found[l.ItemID] = true
-				d, ok, why := Evaluate(r.Cfg, t, l, typo, now)
-				if !ok {
-					if r.Verbose {
-						log.Printf("skip %-45.45q %s", l.Title, why)
-					}
-					continue
-				}
-				if prev, dup := byID[l.ItemID]; !dup || d.Score > prev.Score {
-					byID[l.ItemID] = d
-				}
-			}
-		}
+	// Run every query concurrently (bounded, to stay inside eBay's rate limits),
+	// then merge the results in watchlist order so output is deterministic.
+	type job struct {
+		ti       int // index into Cfg.Targets
+		t        Target
+		query    string
+		typo     bool
+		listings []Listing
+		err      error
+	}
+	var jobs []job
+	for ti, t := range r.Cfg.Targets {
 		for _, q := range t.Queries {
-			run(q, false)
+			jobs = append(jobs, job{ti: ti, t: t, query: q})
 		}
 		for _, q := range t.TypoQueries {
-			run(q, true)
+			jobs = append(jobs, job{ti: ti, t: t, query: q, typo: true})
+		}
+	}
+	forEach(len(jobs), r.searchWorkers(), func(i int) {
+		j := &jobs[i]
+		j.listings, j.err = r.Search.Search(ctx, j.query, j.t.MarketPrice*j.t.MaxBuyRatio)
+	})
+
+	byID := map[string]Deal{}
+	var searchErrs []string
+	// A listing counts as a "typo find" only if normal searches missed it.
+	found := map[int]map[string]bool{} // target index -> item IDs already seen
+	for _, j := range jobs {
+		if j.err != nil {
+			searchErrs = append(searchErrs, j.err.Error())
+			continue
+		}
+		if found[j.ti] == nil {
+			found[j.ti] = map[string]bool{}
+		}
+		seen := found[j.ti]
+		for _, l := range j.listings {
+			if seen[l.ItemID] { // already seen by an earlier query for this target
+				continue
+			}
+			seen[l.ItemID] = true
+			d, ok, why := Evaluate(r.Cfg, j.t, l, j.typo, now)
+			if !ok {
+				if r.Verbose {
+					log.Printf("skip %-45.45q %s", l.Title, why)
+				}
+				continue
+			}
+			if prev, dup := byID[l.ItemID]; !dup || d.Score > prev.Score {
+				byID[l.ItemID] = d
+			}
 		}
 	}
 

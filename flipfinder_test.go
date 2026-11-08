@@ -318,3 +318,37 @@ func TestJevPayload(t *testing.T) {
 		t.Errorf("unexpected payload: %s", b)
 	}
 }
+
+// Results must not depend on how many searches run at once.
+func TestRunOnceSameResultAnyConcurrency(t *testing.T) {
+	cfg, err := LoadConfig("testdata/demo-watchlist.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var want []string
+	for _, workers := range []int{1, 8} {
+		n := &recordingNotifier{}
+		r := &Runner{Cfg: cfg, Search: demoSearcher{}, Check: demoChecker{}, Notify: n,
+			ReadOnly: true, MaxSend: 10, SearchWorkers: workers, CheckWorkers: workers}
+		if err := r.RunOnce(context.Background(), time.Now()); err != nil {
+			t.Fatal(err)
+		}
+		if want == nil {
+			want = n.ids
+		} else if strings.Join(n.ids, ",") != strings.Join(want, ",") {
+			t.Errorf("workers=%d sent %v, want %v", workers, n.ids, want)
+		}
+	}
+	if len(want) == 0 {
+		t.Fatal("no alerts sent")
+	}
+}
+
+type recordingNotifier struct{ ids []string }
+
+func (c *recordingNotifier) Send(_ context.Context, d Deal) error {
+	c.ids = append(c.ids, d.Listing.ItemID)
+	return nil
+}
+
+func (c *recordingNotifier) SendIndex(context.Context, []Deal, int) error { return nil }
