@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestEbayBaseURL(t *testing.T) {
@@ -58,5 +59,42 @@ func TestEbayClientUsesBaseURLAndCachesToken(t *testing.T) {
 	}
 	if tokenCalls != 1 {
 		t.Errorf("token fetched %d times, want 1", tokenCalls)
+	}
+}
+
+func TestEbaySearchRetriesWhenRateLimited(t *testing.T) {
+	var searches int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/identity/v1/oauth2/token" {
+			w.Write([]byte(`{"access_token":"tok","expires_in":7200}`))
+			return
+		}
+		searches++
+		if searches == 1 {
+			w.Header().Set("Retry-After", "0")
+			http.Error(w, "slow down", http.StatusTooManyRequests)
+			return
+		}
+		w.Write([]byte(`{"itemSummaries":[{"itemId":"1","title":"PS5"}]}`))
+	}))
+	defer srv.Close()
+
+	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
+	items, err := c.Search(context.Background(), "ps5", 300)
+	if err != nil || len(items) != 1 {
+		t.Fatalf("items=%v err=%v", items, err)
+	}
+	if searches != 2 {
+		t.Errorf("searches = %d, want 2 (one retry)", searches)
+	}
+}
+
+func TestRetryAfter(t *testing.T) {
+	for in, want := range map[string]time.Duration{
+		"": time.Second, "abc": time.Second, "3": 3 * time.Second, "999": 10 * time.Second, "-1": time.Second,
+	} {
+		if got := retryAfter(in, time.Second); got != want {
+			t.Errorf("retryAfter(%q) = %v, want %v", in, got, want)
+		}
 	}
 }

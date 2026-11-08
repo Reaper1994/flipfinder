@@ -33,7 +33,7 @@ func NewJev(baseURL, apiKey, model string) (*Jev, error) {
 		return nil, errors.New("TYPESAFE_URL must be https")
 	}
 	return &Jev{BaseURL: baseURL, APIKey: apiKey, Model: model,
-		HTTP: &http.Client{Timeout: 20 * time.Second}, MaxRetries: 3}, nil
+		HTTP: &http.Client{Transport: newTransport(), Timeout: 20 * time.Second}, MaxRetries: 3}, nil
 }
 
 type jevChoice struct {

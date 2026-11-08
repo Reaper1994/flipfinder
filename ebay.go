@@ -92,8 +92,17 @@ func EbayBaseURL(env string) (string, error) {
 func NewEbayClient(id, secret, baseURL, marketplace, postcode string) *EbayClient {
 	return &EbayClient{
 		ClientID: id, ClientSecret: secret, BaseURL: baseURL, Marketplace: marketplace, Postcode: postcode,
-		HTTP: &http.Client{Timeout: 20 * time.Second},
+		HTTP: &http.Client{Transport: newTransport(), Timeout: 20 * time.Second},
 	}
+}
+
+// newTransport returns a transport that keeps enough idle connections per host
+// for concurrent requests to reuse, instead of reconnecting (TLS handshake
+// included) once more than the default two are in flight.
+func newTransport() *http.Transport {
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.MaxIdleConnsPerHost = 8
+	return t
 }
 
 func (c *EbayClient) accessToken(ctx context.Context) (string, error) {
@@ -157,19 +166,34 @@ func (c *EbayClient) Search(ctx context.Context, query string, maxPrice float64)
 		"sort":   {"newlyListed"},
 		"limit":  {"50"},
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-		c.BaseURL+"/buy/browse/v1/item_summary/search?"+q.Encode(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+tok)
-	req.Header.Set("X-EBAY-C-MARKETPLACE-ID", c.Marketplace)
-	if c.Postcode != "" {
-		req.Header.Set("X-EBAY-C-ENDUSERCTX", "contextualLocation="+url.QueryEscape("country=GB,zip="+c.Postcode))
-	}
-	resp, err := c.HTTP.Do(req)
-	if err != nil {
-		return nil, err
+	u := c.BaseURL + "/buy/browse/v1/item_summary/search?" + q.Encode()
+	var resp *http.Response
+	for attempt := 0; ; attempt++ {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+tok)
+		req.Header.Set("X-EBAY-C-MARKETPLACE-ID", c.Marketplace)
+		if c.Postcode != "" {
+			req.Header.Set("X-EBAY-C-ENDUSERCTX", "contextualLocation="+url.QueryEscape("country=GB,zip="+c.Postcode))
+		}
+		resp, err = c.HTTP.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode != http.StatusTooManyRequests || attempt >= maxSearchRetries {
+			break
+		}
+		// Rate limited: wait as long as eBay asks, then try again.
+		wait := retryAfter(resp.Header.Get("Retry-After"), time.Duration(attempt+1)*time.Second)
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 64<<10))
+		resp.Body.Close()
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(wait):
+		}
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
@@ -183,4 +207,16 @@ func (c *EbayClient) Search(ctx context.Context, query string, maxPrice float64)
 		return nil, err
 	}
 	return out.ItemSummaries, nil
+}
+
+const maxSearchRetries = 2
+
+// retryAfter parses a Retry-After header given in seconds, capped at 10s so a
+// run never stalls for long; def is used when it is missing or malformed.
+func retryAfter(h string, def time.Duration) time.Duration {
+	secs, err := strconv.Atoi(strings.TrimSpace(h))
+	if err != nil || secs < 0 {
+		return def
+	}
+	return min(time.Duration(secs)*time.Second, 10*time.Second)
 }
