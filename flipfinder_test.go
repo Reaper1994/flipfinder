@@ -387,3 +387,42 @@ func (tiedSearcher) Search(context.Context, string, float64) ([]Listing, error) 
 	}
 	return out, nil
 }
+
+func TestTyreTargets(t *testing.T) {
+	cfg, err := LoadConfig("watchlist.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	byName := map[string]Target{}
+	for _, tg := range cfg.Targets {
+		byName[tg.Name] = tg
+	}
+	single := byName["235/45 R20 all-season tyre (single, new)"]
+	pair := byName["235/45 R20 all-season tyres (pair, new)"]
+	set := byName["235/45 R20 all-season tyres (set of 4, new)"]
+	now := time.Date(2026, 11, 11, 12, 0, 0, 0, time.UTC)
+	cases := []struct {
+		name  string
+		tg    Target
+		title string
+		price string
+		ok    bool
+	}{
+		{"new single", single, "Michelin CrossClimate 2 235/45 R20 100V XL SUV 4x4", "95.00", true},
+		{"single, other size", single, "Michelin CrossClimate 2 235/45 R19 99V", "95.00", false},
+		{"single, summer tyre", single, "Pirelli P Zero 235/45R20 summer tyre", "95.00", false},
+		{"single, part worn", single, "235/45 R20 all season part worn 6mm", "40.00", false},
+		{"single, on alloys", single, "20 inch alloy wheels 235/45 R20 all season", "95.00", false},
+		{"single target skips a pair", single, "2x 235/45 R20 all season Goodyear Vector 4Seasons", "95.00", false},
+		{"pair", pair, "Pair 235/45 R20 Goodyear Vector 4Seasons all season", "190.00", true},
+		{"pair target needs a pair", pair, "235/45 R20 all season tyre", "190.00", false},
+		{"set of 4", set, "Set of 4 Bridgestone Turanza All Season 6 235/45 R20 unused", "380.00", true},
+		{"set target ignores 4x4", set, "235/45 R20 all season tyre 4x4 SUV", "380.00", false},
+	}
+	for _, c := range cases {
+		_, ok, why := Evaluate(cfg, c.tg, listing(c.title, c.price), false, now)
+		if ok != c.ok {
+			t.Errorf("%s: ok=%v want %v (%s)", c.name, ok, c.ok, why)
+		}
+	}
+}

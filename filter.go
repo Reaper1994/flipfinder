@@ -45,10 +45,12 @@ func Evaluate(cfg Config, t Target, l Listing, typo bool, now time.Time) (Deal, 
 			}
 		}
 	}
-	if len(t.RequireAny) > 0 && !slices.ContainsFunc(t.RequireAny, func(s string) bool {
-		return strings.Contains(title, strings.ToLower(s))
-	}) {
-		return Deal{}, false, "missing required word"
+	for _, words := range append([][]string{t.RequireAny}, t.RequireAll...) {
+		if len(words) > 0 && !slices.ContainsFunc(words, func(s string) bool {
+			return strings.Contains(title, strings.ToLower(s))
+		}) {
+			return Deal{}, false, "missing required word"
+		}
 	}
 
 	d := Deal{Target: t.Name, Listing: l, Typo: typo}

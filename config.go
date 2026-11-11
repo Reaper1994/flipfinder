@@ -47,6 +47,9 @@ type Target struct {
 
 	Exclude    []string `json:"exclude"`
 	RequireAny []string `json:"require_any"` // title must contain at least one, e.g. "m2" for a Mac mini M2
+	// Extra word groups for items that need several things at once: the title must
+	// contain at least one word from every group, e.g. a tyre size, "all season" and "pair".
+	RequireAll [][]string `json:"require_all"`
 }
 
 func LoadConfig(path string) (Config, error) {
