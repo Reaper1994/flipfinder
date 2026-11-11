@@ -440,10 +440,10 @@ func TestTyreTargets(t *testing.T) {
 	if msg := formatDeal(d, false); !strings.Contains(msg, "Limit") || strings.Contains(msg, "Resale") {
 		t.Errorf("buy alert should show the limit, not resale:\n%s", msg)
 	}
-	over := listing("Michelin CrossClimate 2 235/45 R20 100V XL", "125.00")
+	over := listing("Michelin CrossClimate 2 235/45 R20 100V XL", "155.00")
 	over.Condition = "New"
 	if _, ok, why := Evaluate(cfg, single, over, false, now); ok || why != "over your limit" {
-		t.Errorf("£125 tyre: ok=%v (%s), want over your limit", ok, why)
+		t.Errorf("£155 tyre: ok=%v (%s), want over your limit", ok, why)
 	}
 
 	used := listing("Michelin CrossClimate 2 235/45 R20 100V XL", "89.00")
