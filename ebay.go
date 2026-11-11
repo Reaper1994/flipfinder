@@ -17,7 +17,7 @@ import (
 
 // Searcher is anything that returns listings for a query (eBay, or the demo fake).
 type Searcher interface {
-	Search(ctx context.Context, query string, maxPrice float64) ([]Listing, error)
+	Search(ctx context.Context, query string, maxPrice float64, newOnly bool) ([]Listing, error)
 }
 
 // Listing is the subset of an eBay item summary we use.
@@ -147,19 +147,24 @@ func (c *EbayClient) accessToken(ctx context.Context) (string, error) {
 }
 
 // Search returns the newest UK listings for query priced up to maxPrice,
-// excluding eBay's "for parts or not working" condition.
-func (c *EbayClient) Search(ctx context.Context, query string, maxPrice float64) ([]Listing, error) {
+// excluding eBay's "for parts or not working" condition. newOnly limits it to
+// New and New-other, so used listings don't fill the 50 results.
+func (c *EbayClient) Search(ctx context.Context, query string, maxPrice float64, newOnly bool) ([]Listing, error) {
 	tok, err := c.accessToken(ctx)
 	if err != nil {
 		return nil, err
+	}
+	// New, open box, refurbished and used grades; 7000 (for parts) left out.
+	conditions := "conditionIds:{1000|1500|2000|2010|2020|2030|2500|2750|3000|4000|5000|6000}"
+	if newOnly {
+		conditions = "conditionIds:{1000|1500}"
 	}
 	filter := strings.Join([]string{
 		fmt.Sprintf("price:[..%.0f]", math.Ceil(maxPrice)),
 		"priceCurrency:GBP",
 		"itemLocationCountry:GB",
 		"buyingOptions:{FIXED_PRICE|AUCTION|BEST_OFFER}",
-		// New, open box, refurbished and used grades; 7000 (for parts) left out.
-		"conditionIds:{1000|1500|2000|2010|2020|2030|2500|2750|3000|4000|5000|6000}",
+		conditions,
 	}, ",")
 	q := url.Values{
 		"q":      {query},

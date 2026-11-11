@@ -114,11 +114,20 @@ func formatDeal(d Deal, htmlMode bool) string {
 		{priceLabel, fmt.Sprintf("£%.2f", d.Price)},
 		{"Postage", postage},
 		{"Total", fmt.Sprintf("£%.2f", d.Cost)},
-		{"Resale", fmt.Sprintf("~£%.0f", d.Resale)},
-		{"Profit", fmt.Sprintf("~£%.0f (%.0f%% ROI)", d.Profit, d.ROI*100)},
+	}
+	if d.BuyUnder > 0 {
+		rows = append(rows,
+			[2]string{"Limit", fmt.Sprintf("£%.0f (£%.0f under)", d.BuyUnder, d.BuyUnder-d.Cost)},
+			[2]string{"Typical", fmt.Sprintf("~£%.0f (save ~£%.0f)", d.Resale, d.Profit)})
+	} else {
+		rows = append(rows,
+			[2]string{"Resale", fmt.Sprintf("~£%.0f", d.Resale)},
+			[2]string{"Profit", fmt.Sprintf("~£%.0f (%.0f%% ROI)", d.Profit, d.ROI*100)})
+	}
+	rows = append(rows, [][2]string{
 		{"Score", fmt.Sprintf("%.0f", d.Score)},
 		{"Advice", label},
-	}
+	}...)
 	if c := d.Listing.Condition; c != "" {
 		rows = append(rows, [2]string{"Condition", c})
 	}
@@ -174,8 +183,12 @@ func formatIndex(deals []Deal, held int, htmlMode bool) string {
 		if htmlMode {
 			name = fmt.Sprintf(`<a href="%s">%s</a>`, html.EscapeString(d.Listing.ItemWebURL), html.EscapeString(d.Target))
 		}
-		fmt.Fprintf(&b, "\n\n%d. %s %s · %s\n£%.0f total · ~£%.0f profit · score %.0f",
-			d.Rank, icon, label, name, d.Cost, d.Profit, d.Score)
+		value := fmt.Sprintf("~£%.0f profit", d.Profit)
+		if d.BuyUnder > 0 {
+			value = fmt.Sprintf("£%.0f under your limit", d.BuyUnder-d.Cost)
+		}
+		fmt.Fprintf(&b, "\n\n%d. %s %s · %s\n£%.0f total · %s · score %.0f",
+			d.Rank, icon, label, name, d.Cost, value, d.Score)
 	}
 	if held > 0 {
 		fmt.Fprintf(&b, "\n\n+%d more next run", held)

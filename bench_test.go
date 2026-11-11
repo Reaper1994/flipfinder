@@ -37,7 +37,7 @@ func BenchmarkJevPayload(b *testing.B) {
 // concurrency buys over one-at-a-time searching.
 type slowSearcher struct{ delay time.Duration }
 
-func (s slowSearcher) Search(ctx context.Context, q string, _ float64) ([]Listing, error) {
+func (s slowSearcher) Search(ctx context.Context, q string, _ float64, _ bool) ([]Listing, error) {
 	select {
 	case <-time.After(s.delay):
 	case <-ctx.Done():
