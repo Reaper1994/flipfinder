@@ -469,3 +469,38 @@ func posted(l Listing) Listing {
 	}{ShippingCost: &Money{Value: "0.00"}})
 	return l
 }
+
+// Buy-for-me deals are sent before resale deals, even when they score lower,
+// so the MaxSend cap can't push them out.
+func TestRunOnceBuyForMeFirst(t *testing.T) {
+	cfg := testCfg
+	cfg.Targets = []Target{
+		{Name: "PS5", Queries: []string{"ps5"}, MarketPrice: 320, MaxBuyRatio: 0.8, MinProfit: 40, MinPrice: 140},
+		{Name: "Tyre", Queries: []string{"tyre"}, MarketPrice: 200, AnyPrice: true, MinPrice: 50},
+	}
+	n := &recordingNotifier{}
+	r := &Runner{Cfg: cfg, Search: mixedSearcher{}, Notify: n, ReadOnly: true, MaxSend: 2}
+	if err := r.RunOnce(context.Background(), time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(n.ids, ","); got != "t1,p1" {
+		t.Errorf("sent %s, want the tyre first then the best PS5 deal", got)
+	}
+}
+
+type mixedSearcher struct{}
+
+func (mixedSearcher) Search(_ context.Context, q string, _ SearchOptions) ([]Listing, error) {
+	if q == "tyre" {
+		l := posted(listing("Tyre", "240.00")) // above the £200 typical price
+		l.ItemID = "t1"
+		return []Listing{l}, nil
+	}
+	var out []Listing
+	for _, id := range []string{"p1", "p2"} {
+		l := posted(listing("PS5 console", "200.00"))
+		l.ItemID = id
+		out = append(out, l)
+	}
+	return out, nil
+}
