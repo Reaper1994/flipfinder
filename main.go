@@ -273,10 +273,17 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 		deals = kept
 	}
 
-	// Ties are broken by item ID: deals come from a map, so without a total
-	// order equal-score deals could swap places (and which ones are held back
-	// by MaxSend) from run to run.
+	// Things you're buying for yourself (buy_under / any_price) come first, so
+	// resale deals can't crowd them out of the MaxSend alerts. Ties are broken
+	// by item ID: deals come from a map, so without a total order equal-score
+	// deals could swap places (and which ones are held back) from run to run.
 	slices.SortFunc(deals, func(a, b Deal) int {
+		if a.ForMe != b.ForMe {
+			if a.ForMe {
+				return -1
+			}
+			return 1
+		}
 		if c := cmp.Compare(b.Score, a.Score); c != 0 {
 			return c
 		}
