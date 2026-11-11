@@ -936,7 +936,9 @@
         "cross climate",
         "quatrac",
         "weatheractive",
-        "seasonproof"
+        "seasonproof",
+        "a/s",
+        "suregrip"
       ],
       "require_all": [
         [
@@ -1027,7 +1029,9 @@
         "cross climate",
         "quatrac",
         "weatheractive",
-        "seasonproof"
+        "seasonproof",
+        "a/s",
+        "suregrip"
       ],
       "require_all": [
         [
@@ -1121,7 +1125,9 @@
         "cross climate",
         "quatrac",
         "weatheractive",
-        "seasonproof"
+        "seasonproof",
+        "a/s",
+        "suregrip"
       ],
       "require_all": [
         [

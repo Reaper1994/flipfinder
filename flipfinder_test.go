@@ -414,6 +414,7 @@ func TestTyreTargets(t *testing.T) {
 		{"single, part worn", single, "235/45 R20 all season part worn 6mm", "40.00", false},
 		{"single, on alloys", single, "20 inch alloy wheels 235/45 R20 all season", "95.00", false},
 		{"single target skips a pair", single, "2x 235/45 R20 all season Goodyear Vector 4Seasons", "95.00", false},
+		{"A/S means all season", single, "235/45 R20 100W Gripmax SureGrip A/S XL", "95.00", true},
 		{"1x is a single, not a pair", single, "1x 235/45R20 100W Vredestein Quatrac Pro M+S", "95.00", true},
 		{"pair", pair, "Pair 235/45 R20 Goodyear Vector 4Seasons all season", "190.00", true},
 		{"pair target needs a pair", pair, "235/45 R20 all season tyre", "190.00", false},
