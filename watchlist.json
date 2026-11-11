@@ -919,8 +919,8 @@
         "235 45 r20 all seson",
         "235/45 r20 al season"
       ],
-      "market_price": 150,
-      "buy_under": 120,
+      "market_price": 190,
+      "buy_under": 150,
       "min_price": 55,
       "require_any": [
         "all season",
@@ -1012,8 +1012,8 @@
         "235 45 r20 all seson pair",
         "235/45 r20 al season pair"
       ],
-      "market_price": 300,
-      "buy_under": 240,
+      "market_price": 380,
+      "buy_under": 300,
       "min_price": 110,
       "require_any": [
         "all season",
@@ -1108,8 +1108,8 @@
         "235 45 r20 all seson x4",
         "235/45 r20 al season x4"
       ],
-      "market_price": 600,
-      "buy_under": 470,
+      "market_price": 760,
+      "buy_under": 560,
       "min_price": 220,
       "require_any": [
         "all season",
