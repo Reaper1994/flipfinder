@@ -47,7 +47,9 @@ go test ./...
 
    To match items that need several things at once, use `require_all`: a list of word groups, where the title must contain at least one word from every group. The 235/45 R20 all-season tyre targets use it for size + "all season" (+ "pair" or "set of 4"), with separate targets and prices for a single tyre, a pair and a set of 4. They also set `new_only: true`, so only listings whose eBay condition is New are considered.
 
-   **Buying for yourself** rather than to resell? Give the target a `buy_under` price instead of relying on `max_buy_ratio` and `min_profit`. You'll get an alert for anything whose total (with postage) is at or under it, and the alert shows your limit and the saving against `market_price` (the typical price) instead of resale and profit. The tyre targets work this way: £150 for one, £300 a pair, £560 a set of 4. Change those to your own limits. With `new_only`, the eBay search itself asks only for new listings, so used ones don't crowd them out.
+   **Buying for yourself** rather than to resell? Give the target a `buy_under` price instead of relying on `max_buy_ratio` and `min_profit`. You'll get an alert for anything whose total (with postage) is at or under it, and the alert shows your limit and the saving against `market_price` (the typical price) instead of resale and profit. The tyre targets work this way, for premium brands only (Pirelli, Michelin, Continental, Goodyear, Bridgestone): £160 for one, £310 a pair, £600 a set of 4. Change those to your own limits. With `new_only`, the eBay search itself asks only for new listings, so used ones don't crowd them out.
+
+   **Collecting in person:** `pickup_radius_miles` (200 on the tyre targets) also runs eBay's local-pickup search around the watchlist `postcode` (TW3, Hounslow). Collection-only listings then count only if they're within that radius, and the alert says "📍 collect within 200 mi of TW3". Posted listings count from anywhere. Each pickup search is one more eBay call, so keep an eye on the 5,000-a-day limit: the current watchlist uses about 127 searches a run, about 4,600 a day.
 
 ```bash
 export EBAY_CLIENT_ID=... EBAY_CLIENT_SECRET=...

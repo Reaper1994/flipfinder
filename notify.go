@@ -109,6 +109,9 @@ func formatDeal(d Deal, htmlMode bool) string {
 	}
 	if _, ok := cheapestShipping(d.Listing); !ok {
 		postage = "check"
+		if d.Listing.NearPickup {
+			postage = "collect"
+		}
 	}
 	rows := [][2]string{
 		{priceLabel, fmt.Sprintf("£%.2f", d.Price)},

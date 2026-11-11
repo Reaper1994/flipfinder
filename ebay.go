@@ -15,13 +15,27 @@ import (
 	"time"
 )
 
+// SearchOptions narrow one eBay search.
+type SearchOptions struct {
+	MaxPrice float64
+	NewOnly  bool // New and New-other only
+	// PickupRadiusMiles > 0: only listings you can collect within this many
+	// miles of PickupPostcode (eBay's local-pickup search).
+	PickupRadiusMiles float64
+	PickupPostcode    string
+}
+
 // Searcher is anything that returns listings for a query (eBay, or the demo fake).
 type Searcher interface {
-	Search(ctx context.Context, query string, maxPrice float64, newOnly bool) ([]Listing, error)
+	Search(ctx context.Context, query string, opt SearchOptions) ([]Listing, error)
 }
 
 // Listing is the subset of an eBay item summary we use.
 type Listing struct {
+	// NearPickup is set when eBay's local-pickup search returned this listing,
+	// i.e. it can be collected within the target's pickup radius. Not from eBay.
+	NearPickup bool `json:"-"`
+
 	ItemID           string   `json:"itemId"`
 	Title            string   `json:"title"`
 	Price            *Money   `json:"price"`
@@ -147,25 +161,34 @@ func (c *EbayClient) accessToken(ctx context.Context) (string, error) {
 }
 
 // Search returns the newest UK listings for query priced up to maxPrice,
-// excluding eBay's "for parts or not working" condition. newOnly limits it to
-// New and New-other, so used listings don't fill the 50 results.
-func (c *EbayClient) Search(ctx context.Context, query string, maxPrice float64, newOnly bool) ([]Listing, error) {
+// excluding eBay's "for parts or not working" condition. See SearchOptions.
+func (c *EbayClient) Search(ctx context.Context, query string, opt SearchOptions) ([]Listing, error) {
 	tok, err := c.accessToken(ctx)
 	if err != nil {
 		return nil, err
 	}
 	// New, open box, refurbished and used grades; 7000 (for parts) left out.
 	conditions := "conditionIds:{1000|1500|2000|2010|2020|2030|2500|2750|3000|4000|5000|6000}"
-	if newOnly {
+	if opt.NewOnly {
 		conditions = "conditionIds:{1000|1500}"
 	}
-	filter := strings.Join([]string{
-		fmt.Sprintf("price:[..%.0f]", math.Ceil(maxPrice)),
+	filters := []string{
+		fmt.Sprintf("price:[..%.0f]", math.Ceil(opt.MaxPrice)),
 		"priceCurrency:GBP",
 		"itemLocationCountry:GB",
 		"buyingOptions:{FIXED_PRICE|AUCTION|BEST_OFFER}",
 		conditions,
-	}, ",")
+	}
+	if opt.PickupRadiusMiles > 0 && opt.PickupPostcode != "" {
+		filters = append(filters,
+			"deliveryOptions:{SELLER_ARRANGED_LOCAL_PICKUP}",
+			"pickupCountry:GB",
+			"pickupPostalCode:"+opt.PickupPostcode,
+			fmt.Sprintf("pickupRadius:%.0f", opt.PickupRadiusMiles),
+			"pickupRadiusUnit:mi",
+		)
+	}
+	filter := strings.Join(filters, ",")
 	q := url.Values{
 		"q":      {query},
 		"filter": {filter},

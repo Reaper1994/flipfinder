@@ -50,7 +50,7 @@ func TestEbayClientUsesBaseURLAndCachesToken(t *testing.T) {
 
 	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
 	for i := 0; i < 2; i++ {
-		items, err := c.Search(context.Background(), "ps5", 300, false)
+		items, err := c.Search(context.Background(), "ps5", SearchOptions{MaxPrice: 300})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -81,7 +81,7 @@ func TestEbaySearchRetriesWhenRateLimited(t *testing.T) {
 	defer srv.Close()
 
 	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
-	items, err := c.Search(context.Background(), "ps5", 300, false)
+	items, err := c.Search(context.Background(), "ps5", SearchOptions{MaxPrice: 300})
 	if err != nil || len(items) != 1 {
 		t.Fatalf("items=%v err=%v", items, err)
 	}
@@ -111,7 +111,7 @@ func TestEbaySearchPriceFilterRoundsUp(t *testing.T) {
 	}))
 	defer srv.Close()
 	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
-	if _, err := c.Search(context.Background(), "ps5", 239.4, false); err != nil {
+	if _, err := c.Search(context.Background(), "ps5", SearchOptions{MaxPrice: 239.4}); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.HasPrefix(filter, "price:[..240]") {
@@ -131,10 +131,33 @@ func TestEbaySearchNewOnly(t *testing.T) {
 	}))
 	defer srv.Close()
 	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
-	if _, err := c.Search(context.Background(), "tyre", 120, true); err != nil {
+	if _, err := c.Search(context.Background(), "tyre", SearchOptions{MaxPrice: 120, NewOnly: true}); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.HasSuffix(filter, "conditionIds:{1000|1500}") {
 		t.Errorf("filter = %q, want only New and New-other", filter)
+	}
+}
+
+func TestEbaySearchPickupRadius(t *testing.T) {
+	var filter string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/identity/v1/oauth2/token" {
+			w.Write([]byte(`{"access_token":"tok","expires_in":7200}`))
+			return
+		}
+		filter = r.URL.Query().Get("filter")
+		w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "TW3")
+	opt := SearchOptions{MaxPrice: 600, NewOnly: true, PickupRadiusMiles: 200, PickupPostcode: "TW3"}
+	if _, err := c.Search(context.Background(), "tyre", opt); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"deliveryOptions:{SELLER_ARRANGED_LOCAL_PICKUP}", "pickupPostalCode:TW3", "pickupRadius:200", "pickupRadiusUnit:mi"} {
+		if !strings.Contains(filter, want) {
+			t.Errorf("filter %q is missing %q", filter, want)
+		}
 	}
 }

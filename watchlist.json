@@ -1,6 +1,6 @@
 {
   "marketplace": "EBAY_GB",
-  "postcode": "UB3",
+  "postcode": "TW3",
   "auction_max_hours_left": 3,
   "auction_max_bids": 3,
   "sell_fee_pct": 0,
@@ -906,21 +906,16 @@
       ]
     },
     {
-      "name": "235/45 R20 all-season tyre (single, new, for me)",
+      "name": "Premium 235/45 R20 all-season tyre (single, new, for me)",
       "queries": [
-        "235/45 r20 all season tyre",
-        "235/45r20 all season",
-        "235/45 r20 crossclimate",
-        "235/45 r20 all weather"
+        "235/45 r20 all season",
+        "michelin crossclimate 235/45 r20"
       ],
       "typo_queries": [
-        "235 45 20 all season",
-        "235/45/20 all season",
-        "235 45 r20 all seson",
-        "235/45 r20 al season"
+        "235 45 20 all season"
       ],
-      "market_price": 190,
-      "buy_under": 150,
+      "market_price": 210,
+      "buy_under": 160,
       "min_price": 55,
       "require_any": [
         "all season",
@@ -938,7 +933,11 @@
         "weatheractive",
         "seasonproof",
         "a/s",
-        "suregrip"
+        "scorpion all season",
+        "allseasoncontact",
+        "vector 4seasons",
+        "4seasons",
+        "turanza all season"
       ],
       "require_all": [
         [
@@ -954,9 +953,19 @@
           "235 45 r20",
           "235-45-20",
           "2354520"
+        ],
+        [
+          "pirelli",
+          "michelin",
+          "crossclimate",
+          "cross climate",
+          "continental",
+          "goodyear",
+          "bridgestone"
         ]
       ],
       "new_only": true,
+      "pickup_radius_miles": 200,
       "exclude": [
         "alloy",
         "alloys",
@@ -999,21 +1008,16 @@
       ]
     },
     {
-      "name": "235/45 R20 all-season tyres (pair, new, for me)",
+      "name": "Premium 235/45 R20 all-season tyres (pair, new, for me)",
       "queries": [
-        "235/45 r20 all season tyre pair",
-        "235/45r20 all season pair",
-        "235/45 r20 crossclimate pair",
-        "235/45 r20 all weather pair"
+        "235/45 r20 all season pair",
+        "michelin crossclimate 235/45 r20 pair"
       ],
       "typo_queries": [
-        "235 45 20 all season pair",
-        "235/45/20 all season pair",
-        "235 45 r20 all seson pair",
-        "235/45 r20 al season pair"
+        "235 45 20 all season pair"
       ],
-      "market_price": 380,
-      "buy_under": 300,
+      "market_price": 420,
+      "buy_under": 310,
       "min_price": 110,
       "require_any": [
         "all season",
@@ -1031,7 +1035,11 @@
         "weatheractive",
         "seasonproof",
         "a/s",
-        "suregrip"
+        "scorpion all season",
+        "allseasoncontact",
+        "vector 4seasons",
+        "4seasons",
+        "turanza all season"
       ],
       "require_all": [
         [
@@ -1049,6 +1057,15 @@
           "2354520"
         ],
         [
+          "pirelli",
+          "michelin",
+          "crossclimate",
+          "cross climate",
+          "continental",
+          "goodyear",
+          "bridgestone"
+        ],
+        [
           "pair",
           "x2",
           "2x",
@@ -1059,6 +1076,7 @@
         ]
       ],
       "new_only": true,
+      "pickup_radius_miles": 200,
       "exclude": [
         "alloy",
         "alloys",
@@ -1095,21 +1113,16 @@
       ]
     },
     {
-      "name": "235/45 R20 all-season tyres (set of 4, new, for me)",
+      "name": "Premium 235/45 R20 all-season tyres (set of 4, new, for me)",
       "queries": [
-        "235/45 r20 all season tyre set of 4",
-        "235/45r20 all season set of 4",
-        "235/45 r20 crossclimate set of 4",
-        "235/45 r20 all weather set of 4"
+        "235/45 r20 all season set of 4",
+        "michelin crossclimate 235/45 r20 set of 4"
       ],
       "typo_queries": [
-        "235 45 20 all season x4",
-        "235/45/20 all season x4",
-        "235 45 r20 all seson x4",
-        "235/45 r20 al season x4"
+        "235 45 20 all season x4"
       ],
-      "market_price": 760,
-      "buy_under": 560,
+      "market_price": 840,
+      "buy_under": 600,
       "min_price": 220,
       "require_any": [
         "all season",
@@ -1127,7 +1140,11 @@
         "weatheractive",
         "seasonproof",
         "a/s",
-        "suregrip"
+        "scorpion all season",
+        "allseasoncontact",
+        "vector 4seasons",
+        "4seasons",
+        "turanza all season"
       ],
       "require_all": [
         [
@@ -1145,6 +1162,15 @@
           "2354520"
         ],
         [
+          "pirelli",
+          "michelin",
+          "crossclimate",
+          "cross climate",
+          "continental",
+          "goodyear",
+          "bridgestone"
+        ],
+        [
           "set of 4",
           "full set",
           "four tyres",
@@ -1153,6 +1179,7 @@
         ]
       ],
       "new_only": true,
+      "pickup_radius_miles": 200,
       "exclude": [
         "alloy",
         "alloys",

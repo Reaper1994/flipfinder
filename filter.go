@@ -89,9 +89,16 @@ func Evaluate(cfg Config, t Target, l Listing, typo bool, now time.Time) (Deal, 
 	}
 
 	d.Shipping, ok = cheapestShipping(l)
-	if !ok {
+	switch {
+	case !ok && t.PickupRadiusMiles > 0 && !l.NearPickup:
+		return Deal{}, false, "collection only, too far or unknown"
+	case !ok && l.NearPickup:
+		d.Flags = append(d.Flags, fmt.Sprintf("📍 collect within %.0f mi of %s", t.PickupRadiusMiles, cfg.Postcode))
+	case !ok:
 		d.Flags = append(d.Flags, "📍 collection or calculated postage — check")
 		d.Caution = true
+	case l.NearPickup:
+		d.Flags = append(d.Flags, fmt.Sprintf("📍 can also collect within %.0f mi of %s", t.PickupRadiusMiles, cfg.Postcode))
 	}
 	d.Cost = d.Price + d.Shipping
 
