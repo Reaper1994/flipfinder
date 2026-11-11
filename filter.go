@@ -53,6 +53,10 @@ func Evaluate(cfg Config, t Target, l Listing, typo bool, now time.Time) (Deal, 
 		}
 	}
 
+	if t.NewOnly && !strings.HasPrefix(strings.ToLower(l.Condition), "new") {
+		return Deal{}, false, "not new"
+	}
+
 	d := Deal{Target: t.Name, Listing: l, Typo: typo}
 
 	// Pure auctions use the current bid; Buy It Now uses the asking price.

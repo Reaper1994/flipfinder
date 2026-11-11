@@ -50,6 +50,10 @@ type Target struct {
 	// Extra word groups for items that need several things at once: the title must
 	// contain at least one word from every group, e.g. a tyre size, "all season" and "pair".
 	RequireAll [][]string `json:"require_all"`
+
+	// Only new items (eBay condition "New…"), for things like tyres whose
+	// market_price is a new price and where used ones are worth far less.
+	NewOnly bool `json:"new_only"`
 }
 
 func LoadConfig(path string) (Config, error) {

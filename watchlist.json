@@ -955,6 +955,7 @@
           "2354520"
         ]
       ],
+      "new_only": true,
       "exclude": [
         "alloy",
         "alloys",
@@ -967,8 +968,6 @@
         "part worn",
         "part-worn",
         "partworn",
-        "mm tread",
-        "tread depth",
         "puncture",
         "sealant",
         "valve",
@@ -988,14 +987,10 @@
         "pair",
         "x2",
         "2x",
-        "x 2",
-        "2 x",
         "set of 2",
         "two tyres",
         "2 tyres",
         "set of 4",
-        "x 4",
-        "4 x",
         "full set",
         "four tyres",
         "4 tyres",
@@ -1055,13 +1050,13 @@
           "pair",
           "x2",
           "2x",
-          "x 2",
-          "2 x",
           "set of 2",
           "two tyres",
-          "2 tyres"
+          "2 tyres",
+          "matching pair"
         ]
       ],
+      "new_only": true,
       "exclude": [
         "alloy",
         "alloys",
@@ -1074,8 +1069,6 @@
         "part worn",
         "part-worn",
         "partworn",
-        "mm tread",
-        "tread depth",
         "puncture",
         "sealant",
         "valve",
@@ -1093,8 +1086,6 @@
         "/50",
         "/55",
         "set of 4",
-        "x 4",
-        "4 x",
         "full set",
         "four tyres",
         "4 tyres",
@@ -1152,14 +1143,13 @@
         ],
         [
           "set of 4",
-          "x 4",
-          "4 x",
           "full set",
           "four tyres",
           "4 tyres",
           "set of four"
         ]
       ],
+      "new_only": true,
       "exclude": [
         "alloy",
         "alloys",
@@ -1172,8 +1162,6 @@
         "part worn",
         "part-worn",
         "partworn",
-        "mm tread",
-        "tread depth",
         "puncture",
         "sealant",
         "valve",
@@ -1193,8 +1181,6 @@
         "pair",
         "x2",
         "2x",
-        "x 2",
-        "2 x",
         "set of 2",
         "two tyres",
         "2 tyres"

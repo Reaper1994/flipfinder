@@ -414,15 +414,24 @@ func TestTyreTargets(t *testing.T) {
 		{"single, part worn", single, "235/45 R20 all season part worn 6mm", "40.00", false},
 		{"single, on alloys", single, "20 inch alloy wheels 235/45 R20 all season", "95.00", false},
 		{"single target skips a pair", single, "2x 235/45 R20 all season Goodyear Vector 4Seasons", "95.00", false},
+		{"1x is a single, not a pair", single, "1x 235/45R20 100W Vredestein Quatrac Pro M+S", "95.00", true},
 		{"pair", pair, "Pair 235/45 R20 Goodyear Vector 4Seasons all season", "190.00", true},
 		{"pair target needs a pair", pair, "235/45 R20 all season tyre", "190.00", false},
 		{"set of 4", set, "Set of 4 Bridgestone Turanza All Season 6 235/45 R20 unused", "380.00", true},
 		{"set target ignores 4x4", set, "235/45 R20 all season tyre 4x4 SUV", "380.00", false},
 	}
 	for _, c := range cases {
-		_, ok, why := Evaluate(cfg, c.tg, listing(c.title, c.price), false, now)
+		l := listing(c.title, c.price)
+		l.Condition = "New"
+		_, ok, why := Evaluate(cfg, c.tg, l, false, now)
 		if ok != c.ok {
 			t.Errorf("%s: ok=%v want %v (%s)", c.name, ok, c.ok, why)
 		}
+	}
+
+	used := listing("Michelin CrossClimate 2 235/45 R20 100V XL", "89.00")
+	used.Condition = "Used"
+	if _, ok, _ := Evaluate(cfg, single, used, false, now); ok {
+		t.Error("a used tyre must not match a new-only target")
 	}
 }
