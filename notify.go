@@ -118,10 +118,11 @@ func formatDeal(d Deal, htmlMode bool) string {
 		{"Postage", postage},
 		{"Total", fmt.Sprintf("£%.2f", d.Cost)},
 	}
-	if d.BuyUnder > 0 {
-		rows = append(rows,
-			[2]string{"Limit", fmt.Sprintf("£%.0f (£%.0f under)", d.BuyUnder, d.BuyUnder-d.Cost)},
-			[2]string{"Typical", fmt.Sprintf("~£%.0f (save ~£%.0f)", d.Resale, d.Profit)})
+	if d.ForMe {
+		if d.BuyUnder > 0 {
+			rows = append(rows, [2]string{"Limit", fmt.Sprintf("£%.0f (£%.0f under)", d.BuyUnder, d.BuyUnder-d.Cost)})
+		}
+		rows = append(rows, [2]string{"Typical", fmt.Sprintf("~£%.0f (%s)", d.Resale, versusTypical(d))})
 	} else {
 		rows = append(rows,
 			[2]string{"Resale", fmt.Sprintf("~£%.0f", d.Resale)},
@@ -187,8 +188,11 @@ func formatIndex(deals []Deal, held int, htmlMode bool) string {
 			name = fmt.Sprintf(`<a href="%s">%s</a>`, html.EscapeString(d.Listing.ItemWebURL), html.EscapeString(d.Target))
 		}
 		value := fmt.Sprintf("~£%.0f profit", d.Profit)
-		if d.BuyUnder > 0 {
+		switch {
+		case d.BuyUnder > 0:
 			value = fmt.Sprintf("£%.0f under your limit", d.BuyUnder-d.Cost)
+		case d.ForMe:
+			value = versusTypical(d)
 		}
 		fmt.Fprintf(&b, "\n\n%d. %s %s · %s\n£%.0f total · %s · score %.0f",
 			d.Rank, icon, label, name, d.Cost, value, d.Score)
@@ -260,4 +264,12 @@ func (s *Store) Save(now time.Time) error {
 		return err
 	}
 	return os.Rename(tmp, s.path)
+}
+
+// versusTypical says how a buy-for-yourself price compares with the typical one.
+func versusTypical(d Deal) string {
+	if d.Profit >= 0 {
+		return fmt.Sprintf("save ~£%.0f", d.Profit)
+	}
+	return fmt.Sprintf("~£%.0f above typical", -d.Profit)
 }

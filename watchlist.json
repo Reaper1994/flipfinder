@@ -906,7 +906,7 @@
       ]
     },
     {
-      "name": "Premium 235/45 R20 all-season tyre (single, new, for me)",
+      "name": "Premium 235/45 R20 all-season tyre (single, new, any price)",
       "queries": [
         "235/45 r20 all season",
         "michelin crossclimate 235/45 r20"
@@ -915,7 +915,6 @@
         "235 45 20 all season"
       ],
       "market_price": 210,
-      "buy_under": 160,
       "min_price": 55,
       "require_any": [
         "all season",
@@ -965,7 +964,7 @@
         ]
       ],
       "new_only": true,
-      "pickup_radius_miles": 200,
+      "any_price": true,
       "exclude": [
         "alloy",
         "alloys",
@@ -1008,7 +1007,7 @@
       ]
     },
     {
-      "name": "Premium 235/45 R20 all-season tyres (pair, new, for me)",
+      "name": "Premium 235/45 R20 all-season tyres (pair, new, any price)",
       "queries": [
         "235/45 r20 all season pair",
         "michelin crossclimate 235/45 r20 pair"
@@ -1017,7 +1016,6 @@
         "235 45 20 all season pair"
       ],
       "market_price": 420,
-      "buy_under": 310,
       "min_price": 110,
       "require_any": [
         "all season",
@@ -1076,7 +1074,7 @@
         ]
       ],
       "new_only": true,
-      "pickup_radius_miles": 200,
+      "any_price": true,
       "exclude": [
         "alloy",
         "alloys",
@@ -1113,7 +1111,7 @@
       ]
     },
     {
-      "name": "Premium 235/45 R20 all-season tyres (set of 4, new, for me)",
+      "name": "Premium 235/45 R20 all-season tyres (set of 4, new, any price)",
       "queries": [
         "235/45 r20 all season set of 4",
         "michelin crossclimate 235/45 r20 set of 4"
@@ -1122,7 +1120,6 @@
         "235 45 20 all season x4"
       ],
       "market_price": 840,
-      "buy_under": 600,
       "min_price": 220,
       "require_any": [
         "all season",
@@ -1179,7 +1176,7 @@
         ]
       ],
       "new_only": true,
-      "pickup_radius_miles": 200,
+      "any_price": true,
       "exclude": [
         "alloy",
         "alloys",

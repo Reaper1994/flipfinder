@@ -161,3 +161,23 @@ func TestEbaySearchPickupRadius(t *testing.T) {
 		}
 	}
 }
+
+func TestEbaySearchNoPriceCap(t *testing.T) {
+	var filter string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/identity/v1/oauth2/token" {
+			w.Write([]byte(`{"access_token":"tok","expires_in":7200}`))
+			return
+		}
+		filter = r.URL.Query().Get("filter")
+		w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
+	if _, err := c.Search(context.Background(), "tyre", SearchOptions{NewOnly: true}); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(filter, "price:") {
+		t.Errorf("filter = %q, want no price cap for any-price targets", filter)
+	}
+}

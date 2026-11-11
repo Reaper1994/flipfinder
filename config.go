@@ -59,6 +59,9 @@ type Target struct {
 	// (with postage) is at or under this many pounds, ignoring max_buy_ratio and
 	// min_profit. market_price is then the typical price, used for the saving.
 	BuyUnder float64 `json:"buy_under"`
+	// AnyPrice: buying for yourself with no price limit. Every match alerts
+	// (once), ranked by how far under market_price (the typical price) it is.
+	AnyPrice bool `json:"any_price"`
 
 	// Collection-only listings (no postage price) count only if you can collect
 	// them within this many miles of the watchlist postcode. Posted ones count
@@ -70,6 +73,9 @@ type Target struct {
 func (t Target) SearchCap() float64 {
 	if t.BuyUnder > 0 {
 		return t.BuyUnder
+	}
+	if t.AnyPrice {
+		return 0 // no price filter
 	}
 	return t.MarketPrice * t.MaxBuyRatio
 }
