@@ -156,6 +156,7 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 		t        Target
 		query    string
 		typo     bool
+		pickup   bool // eBay local-pickup search within t.PickupRadiusMiles
 		listings []Listing
 		err      error
 	}
@@ -167,11 +168,34 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 		for _, q := range t.TypoQueries {
 			jobs = append(jobs, job{ti: ti, t: t, query: q, typo: true})
 		}
+		if t.PickupRadiusMiles > 0 && r.Cfg.Postcode != "" {
+			for _, q := range t.Queries {
+				jobs = append(jobs, job{ti: ti, t: t, query: q, pickup: true})
+			}
+		}
 	}
 	forEach(len(jobs), r.searchWorkers(), func(i int) {
 		j := &jobs[i]
-		j.listings, j.err = r.Search.Search(ctx, j.query, j.t.SearchCap(), j.t.NewOnly)
+		opt := SearchOptions{MaxPrice: j.t.SearchCap(), NewOnly: j.t.NewOnly}
+		if j.pickup {
+			opt.PickupRadiusMiles, opt.PickupPostcode = j.t.PickupRadiusMiles, r.Cfg.Postcode
+		}
+		j.listings, j.err = r.Search.Search(ctx, j.query, opt)
 	})
+
+	// Listings the local-pickup search returned can be collected within range.
+	near := map[int]map[string]bool{}
+	for _, j := range jobs {
+		if !j.pickup || j.err != nil {
+			continue
+		}
+		if near[j.ti] == nil {
+			near[j.ti] = map[string]bool{}
+		}
+		for _, l := range j.listings {
+			near[j.ti][l.ItemID] = true
+		}
+	}
 
 	byID := map[string]Deal{}
 	var searchErrs []string
@@ -191,6 +215,7 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 				continue
 			}
 			seen[l.ItemID] = true
+			l.NearPickup = near[j.ti][l.ItemID]
 			d, ok, why := Evaluate(r.Cfg, j.t, l, j.typo, now)
 			if !ok {
 				if r.Verbose {

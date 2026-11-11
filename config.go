@@ -59,6 +59,11 @@ type Target struct {
 	// (with postage) is at or under this many pounds, ignoring max_buy_ratio and
 	// min_profit. market_price is then the typical price, used for the saving.
 	BuyUnder float64 `json:"buy_under"`
+
+	// Collection-only listings (no postage price) count only if you can collect
+	// them within this many miles of the watchlist postcode. Posted ones count
+	// from anywhere. Adds one eBay local-pickup search per query.
+	PickupRadiusMiles float64 `json:"pickup_radius_miles"`
 }
 
 // SearchCap is the highest price worth fetching from eBay for this target.

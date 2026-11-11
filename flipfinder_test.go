@@ -378,7 +378,7 @@ func TestRunOnceTieOrderIsStable(t *testing.T) {
 
 type tiedSearcher struct{}
 
-func (tiedSearcher) Search(context.Context, string, float64, bool) ([]Listing, error) {
+func (tiedSearcher) Search(context.Context, string, SearchOptions) ([]Listing, error) {
 	var out []Listing
 	for _, id := range []string{"f", "e", "d", "c", "b", "a"} {
 		l := listing("PS5 console", "230.00")
@@ -397,9 +397,12 @@ func TestTyreTargets(t *testing.T) {
 	for _, tg := range cfg.Targets {
 		byName[tg.Name] = tg
 	}
-	single := byName["235/45 R20 all-season tyre (single, new, for me)"]
-	pair := byName["235/45 R20 all-season tyres (pair, new, for me)"]
-	set := byName["235/45 R20 all-season tyres (set of 4, new, for me)"]
+	single := byName["Premium 235/45 R20 all-season tyre (single, new, for me)"]
+	pair := byName["Premium 235/45 R20 all-season tyres (pair, new, for me)"]
+	set := byName["Premium 235/45 R20 all-season tyres (set of 4, new, for me)"]
+	if single.Name == "" || pair.Name == "" || set.Name == "" {
+		t.Fatal("tyre targets missing from watchlist.json")
+	}
 	now := time.Date(2026, 11, 11, 12, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name  string
@@ -408,21 +411,22 @@ func TestTyreTargets(t *testing.T) {
 		price string
 		ok    bool
 	}{
-		{"new single", single, "Michelin CrossClimate 2 235/45 R20 100V XL SUV 4x4", "95.00", true},
-		{"single, other size", single, "Michelin CrossClimate 2 235/45 R19 99V", "95.00", false},
-		{"single, summer tyre", single, "Pirelli P Zero 235/45R20 summer tyre", "95.00", false},
-		{"single, part worn", single, "235/45 R20 all season part worn 6mm", "40.00", false},
-		{"single, on alloys", single, "20 inch alloy wheels 235/45 R20 all season", "95.00", false},
-		{"single target skips a pair", single, "2x 235/45 R20 all season Goodyear Vector 4Seasons", "95.00", false},
-		{"A/S means all season", single, "235/45 R20 100W Gripmax SureGrip A/S XL", "95.00", true},
-		{"1x is a single, not a pair", single, "1x 235/45R20 100W Vredestein Quatrac Pro M+S", "95.00", true},
-		{"pair", pair, "Pair 235/45 R20 Goodyear Vector 4Seasons all season", "190.00", true},
-		{"pair target needs a pair", pair, "235/45 R20 all season tyre", "190.00", false},
-		{"set of 4", set, "Set of 4 Bridgestone Turanza All Season 6 235/45 R20 unused", "380.00", true},
-		{"set target ignores 4x4", set, "235/45 R20 all season tyre 4x4 SUV", "380.00", false},
+		{"new single", single, "Michelin CrossClimate 2 235/45 R20 100V XL SUV 4x4", "130.00", true},
+		{"single, other size", single, "Michelin CrossClimate 2 235/45 R19 99V", "130.00", false},
+		{"single, summer tyre", single, "Pirelli P Zero 235/45R20 summer tyre", "130.00", false},
+		{"single, part worn", single, "Pirelli 235/45 R20 all season part worn 6mm", "60.00", false},
+		{"single, on alloys", single, "20 inch alloy wheels Pirelli 235/45 R20 all season", "130.00", false},
+		{"single target skips a pair", single, "2x 235/45 R20 all season Goodyear Vector 4Seasons", "130.00", false},
+		{"budget brand is not premium", single, "235/45 R20 100W Gripmax SureGrip A/S XL", "113.00", false},
+		{"1x is a single, not a pair", single, "1x 235/45R20 100W Continental AllSeasonContact 2", "130.00", true},
+		{"Pirelli all season", single, "Pirelli Scorpion All Season SF3 235/45 R20 100W", "150.00", true},
+		{"pair", pair, "Pair 235/45 R20 Goodyear Vector 4Seasons all season", "260.00", true},
+		{"pair target needs a pair", pair, "Goodyear 235/45 R20 all season tyre", "260.00", false},
+		{"set of 4", set, "Set of 4 Bridgestone Turanza All Season 6 235/45 R20 unused", "500.00", true},
+		{"set target ignores 4x4", set, "Pirelli 235/45 R20 all season tyre 4x4 SUV", "500.00", false},
 	}
 	for _, c := range cases {
-		l := listing(c.title, c.price)
+		l := posted(listing(c.title, c.price))
 		l.Condition = "New"
 		_, ok, why := Evaluate(cfg, c.tg, l, false, now)
 		if ok != c.ok {
@@ -431,24 +435,48 @@ func TestTyreTargets(t *testing.T) {
 	}
 
 	// Buying for yourself: anything at or under the limit, no profit rules.
-	near := listing("Michelin CrossClimate 2 235/45 R20 100V XL", "118.00")
+	near := posted(listing("Michelin CrossClimate 2 235/45 R20 100V XL", "140.00"))
 	near.Condition = "New"
 	d, ok, why := Evaluate(cfg, single, near, false, now)
 	if !ok || d.BuyUnder != single.BuyUnder {
-		t.Fatalf("£118 tyre under a £%.0f limit: ok=%v (%s)", single.BuyUnder, ok, why)
+		t.Fatalf("£140 tyre under a £%.0f limit: ok=%v (%s)", single.BuyUnder, ok, why)
 	}
 	if msg := formatDeal(d, false); !strings.Contains(msg, "Limit") || strings.Contains(msg, "Resale") {
 		t.Errorf("buy alert should show the limit, not resale:\n%s", msg)
 	}
-	over := listing("Michelin CrossClimate 2 235/45 R20 100V XL", "155.00")
+	over := posted(listing("Michelin CrossClimate 2 235/45 R20 100V XL", "165.00"))
 	over.Condition = "New"
 	if _, ok, why := Evaluate(cfg, single, over, false, now); ok || why != "over your limit" {
-		t.Errorf("£155 tyre: ok=%v (%s), want over your limit", ok, why)
+		t.Errorf("£165 tyre: ok=%v (%s), want over your limit", ok, why)
 	}
 
-	used := listing("Michelin CrossClimate 2 235/45 R20 100V XL", "89.00")
+	used := posted(listing("Michelin CrossClimate 2 235/45 R20 100V XL", "120.00"))
 	used.Condition = "Used"
 	if _, ok, _ := Evaluate(cfg, single, used, false, now); ok {
 		t.Error("a used tyre must not match a new-only target")
 	}
+
+	// Collection-only listings count only inside the pickup radius.
+	collect := listing("Set of 4 Pirelli Scorpion All Season SF3 235/45 R20", "550.00")
+	collect.Condition = "New" // listing() sets no postage options: collection only
+	if _, ok, why := Evaluate(cfg, set, collect, false, now); ok || why != "collection only, too far or unknown" {
+		t.Errorf("far collection-only set: ok=%v (%s)", ok, why)
+	}
+	collect.NearPickup = true
+	d, ok, why = Evaluate(cfg, set, collect, false, now)
+	if !ok {
+		t.Fatalf("nearby collection-only set should pass: %s", why)
+	}
+	if msg := formatDeal(d, false); !strings.Contains(msg, "collect within 200 mi of TW3") || !strings.Contains(msg, "Postage   collect") {
+		t.Errorf("collection alert text:\n%s", msg)
+	}
+}
+
+// posted gives a test listing free postage, so it isn't collection-only.
+func posted(l Listing) Listing {
+	l.ShippingOptions = append(l.ShippingOptions, struct {
+		ShippingCost     *Money `json:"shippingCost"`
+		ShippingCostType string `json:"shippingCostType"`
+	}{ShippingCost: &Money{Value: "0.00"}})
+	return l
 }
