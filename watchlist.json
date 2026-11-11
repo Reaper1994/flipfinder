@@ -906,7 +906,7 @@
       ]
     },
     {
-      "name": "235/45 R20 all-season tyre (single, new)",
+      "name": "235/45 R20 all-season tyre (single, new, for me)",
       "queries": [
         "235/45 r20 all season tyre",
         "235/45r20 all season",
@@ -919,9 +919,8 @@
         "235 45 r20 all seson",
         "235/45 r20 al season"
       ],
-      "market_price": 140,
-      "max_buy_ratio": 0.75,
-      "min_profit": 25,
+      "market_price": 150,
+      "buy_under": 120,
       "min_price": 55,
       "require_any": [
         "all season",
@@ -998,7 +997,7 @@
       ]
     },
     {
-      "name": "235/45 R20 all-season tyres (pair, new)",
+      "name": "235/45 R20 all-season tyres (pair, new, for me)",
       "queries": [
         "235/45 r20 all season tyre pair",
         "235/45r20 all season pair",
@@ -1011,9 +1010,8 @@
         "235 45 r20 all seson pair",
         "235/45 r20 al season pair"
       ],
-      "market_price": 280,
-      "max_buy_ratio": 0.75,
-      "min_profit": 45,
+      "market_price": 300,
+      "buy_under": 240,
       "min_price": 110,
       "require_any": [
         "all season",
@@ -1093,7 +1091,7 @@
       ]
     },
     {
-      "name": "235/45 R20 all-season tyres (set of 4, new)",
+      "name": "235/45 R20 all-season tyres (set of 4, new, for me)",
       "queries": [
         "235/45 r20 all season tyre set of 4",
         "235/45r20 all season set of 4",
@@ -1106,9 +1104,8 @@
         "235 45 r20 all seson x4",
         "235/45 r20 al season x4"
       ],
-      "market_price": 560,
-      "max_buy_ratio": 0.75,
-      "min_profit": 80,
+      "market_price": 600,
+      "buy_under": 470,
       "min_price": 220,
       "require_any": [
         "all season",

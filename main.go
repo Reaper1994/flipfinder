@@ -170,7 +170,7 @@ func (r *Runner) RunOnce(ctx context.Context, now time.Time) error {
 	}
 	forEach(len(jobs), r.searchWorkers(), func(i int) {
 		j := &jobs[i]
-		j.listings, j.err = r.Search.Search(ctx, j.query, j.t.MarketPrice*j.t.MaxBuyRatio)
+		j.listings, j.err = r.Search.Search(ctx, j.query, j.t.SearchCap(), j.t.NewOnly)
 	})
 
 	byID := map[string]Deal{}

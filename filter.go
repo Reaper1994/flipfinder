@@ -24,10 +24,12 @@ type Deal struct {
 	Auction bool
 	EndsIn  time.Duration
 	Typo    bool
-	Flags   []string // human-readable warnings and highlights
-	Verdict string   // set by the Jev check, if enabled
-	Score   float64  // ranking: higher is better
-	Caution bool     // something needs a human look before buying
+	// BuyUnder is the target's limit when buying for yourself; 0 for resale deals.
+	BuyUnder float64
+	Flags    []string // human-readable warnings and highlights
+	Verdict  string   // set by the Jev check, if enabled
+	Score    float64  // ranking: higher is better
+	Caution  bool     // something needs a human look before buying
 
 	Rank, Total int // position in this run's alerts, e.g. 2 of 5
 }
@@ -99,14 +101,24 @@ func Evaluate(cfg Config, t Target, l Listing, typo bool, now time.Time) (Deal, 
 	if !d.Auction && d.Cost < t.MarketPrice*cfg.SuspiciousBelow {
 		return Deal{}, false, "suspiciously cheap: likely fake, scam or mislisted"
 	}
-	if d.Cost > t.MarketPrice*t.MaxBuyRatio {
-		return Deal{}, false, "not cheap enough"
-	}
-
-	d.Resale = t.MarketPrice * (1 - cfg.SellFeePct)
-	d.Profit = d.Resale - d.Cost
-	if d.Profit < t.MinProfit {
-		return Deal{}, false, "profit below minimum"
+	if t.BuyUnder > 0 {
+		// Buying for yourself: the limit is all that matters. Profit becomes the
+		// saving against the typical price, which still ranks the alerts.
+		if d.Cost > t.BuyUnder {
+			return Deal{}, false, "over your limit"
+		}
+		d.BuyUnder = t.BuyUnder
+		d.Resale = t.MarketPrice
+		d.Profit = t.MarketPrice - d.Cost
+	} else {
+		if d.Cost > t.MarketPrice*t.MaxBuyRatio {
+			return Deal{}, false, "not cheap enough"
+		}
+		d.Resale = t.MarketPrice * (1 - cfg.SellFeePct)
+		d.Profit = d.Resale - d.Cost
+		if d.Profit < t.MinProfit {
+			return Deal{}, false, "profit below minimum"
+		}
 	}
 	d.ROI = d.Profit / d.Cost
 

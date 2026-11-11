@@ -10,7 +10,7 @@ import (
 // without any API keys. Prices and sellers are made up.
 type demoSearcher struct{}
 
-func (demoSearcher) Search(_ context.Context, q string, _ float64) ([]Listing, error) {
+func (demoSearcher) Search(_ context.Context, q string, _ float64, _ bool) ([]Listing, error) {
 	ql := strings.ToLower(q)
 	soon := time.Now().Add(95 * time.Minute).UTC().Format(time.RFC3339)
 	later := time.Now().Add(4 * 24 * time.Hour).UTC().Format(time.RFC3339)

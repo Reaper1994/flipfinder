@@ -378,7 +378,7 @@ func TestRunOnceTieOrderIsStable(t *testing.T) {
 
 type tiedSearcher struct{}
 
-func (tiedSearcher) Search(context.Context, string, float64) ([]Listing, error) {
+func (tiedSearcher) Search(context.Context, string, float64, bool) ([]Listing, error) {
 	var out []Listing
 	for _, id := range []string{"f", "e", "d", "c", "b", "a"} {
 		l := listing("PS5 console", "230.00")
@@ -397,9 +397,9 @@ func TestTyreTargets(t *testing.T) {
 	for _, tg := range cfg.Targets {
 		byName[tg.Name] = tg
 	}
-	single := byName["235/45 R20 all-season tyre (single, new)"]
-	pair := byName["235/45 R20 all-season tyres (pair, new)"]
-	set := byName["235/45 R20 all-season tyres (set of 4, new)"]
+	single := byName["235/45 R20 all-season tyre (single, new, for me)"]
+	pair := byName["235/45 R20 all-season tyres (pair, new, for me)"]
+	set := byName["235/45 R20 all-season tyres (set of 4, new, for me)"]
 	now := time.Date(2026, 11, 11, 12, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name  string
@@ -427,6 +427,22 @@ func TestTyreTargets(t *testing.T) {
 		if ok != c.ok {
 			t.Errorf("%s: ok=%v want %v (%s)", c.name, ok, c.ok, why)
 		}
+	}
+
+	// Buying for yourself: anything at or under the limit, no profit rules.
+	near := listing("Michelin CrossClimate 2 235/45 R20 100V XL", "118.00")
+	near.Condition = "New"
+	d, ok, why := Evaluate(cfg, single, near, false, now)
+	if !ok || d.BuyUnder != single.BuyUnder {
+		t.Fatalf("£118 tyre under a £%.0f limit: ok=%v (%s)", single.BuyUnder, ok, why)
+	}
+	if msg := formatDeal(d, false); !strings.Contains(msg, "Limit") || strings.Contains(msg, "Resale") {
+		t.Errorf("buy alert should show the limit, not resale:\n%s", msg)
+	}
+	over := listing("Michelin CrossClimate 2 235/45 R20 100V XL", "125.00")
+	over.Condition = "New"
+	if _, ok, why := Evaluate(cfg, single, over, false, now); ok || why != "over your limit" {
+		t.Errorf("£125 tyre: ok=%v (%s), want over your limit", ok, why)
 	}
 
 	used := listing("Michelin CrossClimate 2 235/45 R20 100V XL", "89.00")

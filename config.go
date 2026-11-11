@@ -54,6 +54,19 @@ type Target struct {
 	// Only new items (eBay condition "New…"), for things like tyres whose
 	// market_price is a new price and where used ones are worth far less.
 	NewOnly bool `json:"new_only"`
+
+	// Buying for yourself rather than to resell: alert on anything whose total
+	// (with postage) is at or under this many pounds, ignoring max_buy_ratio and
+	// min_profit. market_price is then the typical price, used for the saving.
+	BuyUnder float64 `json:"buy_under"`
+}
+
+// SearchCap is the highest price worth fetching from eBay for this target.
+func (t Target) SearchCap() float64 {
+	if t.BuyUnder > 0 {
+		return t.BuyUnder
+	}
+	return t.MarketPrice * t.MaxBuyRatio
 }
 
 func LoadConfig(path string) (Config, error) {

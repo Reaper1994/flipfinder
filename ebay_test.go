@@ -50,7 +50,7 @@ func TestEbayClientUsesBaseURLAndCachesToken(t *testing.T) {
 
 	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
 	for i := 0; i < 2; i++ {
-		items, err := c.Search(context.Background(), "ps5", 300)
+		items, err := c.Search(context.Background(), "ps5", 300, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -81,7 +81,7 @@ func TestEbaySearchRetriesWhenRateLimited(t *testing.T) {
 	defer srv.Close()
 
 	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
-	items, err := c.Search(context.Background(), "ps5", 300)
+	items, err := c.Search(context.Background(), "ps5", 300, false)
 	if err != nil || len(items) != 1 {
 		t.Fatalf("items=%v err=%v", items, err)
 	}
@@ -111,10 +111,30 @@ func TestEbaySearchPriceFilterRoundsUp(t *testing.T) {
 	}))
 	defer srv.Close()
 	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
-	if _, err := c.Search(context.Background(), "ps5", 239.4); err != nil {
+	if _, err := c.Search(context.Background(), "ps5", 239.4, false); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.HasPrefix(filter, "price:[..240]") {
 		t.Errorf("filter = %q, want a price cap of 240 so a £239.40 listing is not dropped", filter)
+	}
+}
+
+func TestEbaySearchNewOnly(t *testing.T) {
+	var filter string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/identity/v1/oauth2/token" {
+			w.Write([]byte(`{"access_token":"tok","expires_in":7200}`))
+			return
+		}
+		filter = r.URL.Query().Get("filter")
+		w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+	c := NewEbayClient("id", "secret", srv.URL, "EBAY_GB", "")
+	if _, err := c.Search(context.Background(), "tyre", 120, true); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasSuffix(filter, "conditionIds:{1000|1500}") {
+		t.Errorf("filter = %q, want only New and New-other", filter)
 	}
 }
