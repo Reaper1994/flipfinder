@@ -172,13 +172,16 @@ func (c *EbayClient) Search(ctx context.Context, query string, opt SearchOptions
 	if opt.NewOnly {
 		conditions = "conditionIds:{1000|1500}"
 	}
-	filters := []string{
-		fmt.Sprintf("price:[..%.0f]", math.Ceil(opt.MaxPrice)),
+	var filters []string
+	if opt.MaxPrice > 0 {
+		filters = append(filters, fmt.Sprintf("price:[..%.0f]", math.Ceil(opt.MaxPrice)))
+	}
+	filters = append(filters,
 		"priceCurrency:GBP",
 		"itemLocationCountry:GB",
 		"buyingOptions:{FIXED_PRICE|AUCTION|BEST_OFFER}",
 		conditions,
-	}
+	)
 	if opt.PickupRadiusMiles > 0 && opt.PickupPostcode != "" {
 		filters = append(filters,
 			"deliveryOptions:{SELLER_ARRANGED_LOCAL_PICKUP}",

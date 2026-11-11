@@ -397,9 +397,9 @@ func TestTyreTargets(t *testing.T) {
 	for _, tg := range cfg.Targets {
 		byName[tg.Name] = tg
 	}
-	single := byName["Premium 235/45 R20 all-season tyre (single, new, for me)"]
-	pair := byName["Premium 235/45 R20 all-season tyres (pair, new, for me)"]
-	set := byName["Premium 235/45 R20 all-season tyres (set of 4, new, for me)"]
+	single := byName["Premium 235/45 R20 all-season tyre (single, new, any price)"]
+	pair := byName["Premium 235/45 R20 all-season tyres (pair, new, any price)"]
+	set := byName["Premium 235/45 R20 all-season tyres (set of 4, new, any price)"]
 	if single.Name == "" || pair.Name == "" || set.Name == "" {
 		t.Fatal("tyre targets missing from watchlist.json")
 	}
@@ -434,20 +434,16 @@ func TestTyreTargets(t *testing.T) {
 		}
 	}
 
-	// Buying for yourself: anything at or under the limit, no profit rules.
-	near := posted(listing("Michelin CrossClimate 2 235/45 R20 100V XL", "140.00"))
-	near.Condition = "New"
-	d, ok, why := Evaluate(cfg, single, near, false, now)
-	if !ok || d.BuyUnder != single.BuyUnder {
-		t.Fatalf("£140 tyre under a £%.0f limit: ok=%v (%s)", single.BuyUnder, ok, why)
+	// Any price: dear tyres still alert, showing how they compare with typical.
+	dear := posted(listing("Michelin CrossClimate 3 235/45 R20 100V XL", "230.00"))
+	dear.Condition = "New"
+	d, ok, why := Evaluate(cfg, single, dear, false, now)
+	if !ok || !d.ForMe {
+		t.Fatalf("£230 tyre with no limit: ok=%v (%s)", ok, why)
 	}
-	if msg := formatDeal(d, false); !strings.Contains(msg, "Limit") || strings.Contains(msg, "Resale") {
-		t.Errorf("buy alert should show the limit, not resale:\n%s", msg)
-	}
-	over := posted(listing("Michelin CrossClimate 2 235/45 R20 100V XL", "165.00"))
-	over.Condition = "New"
-	if _, ok, why := Evaluate(cfg, single, over, false, now); ok || why != "over your limit" {
-		t.Errorf("£165 tyre: ok=%v (%s), want over your limit", ok, why)
+	msg := formatDeal(d, false)
+	if strings.Contains(msg, "Limit") || strings.Contains(msg, "Resale") || !strings.Contains(msg, "above typical") {
+		t.Errorf("any-price alert text:\n%s", msg)
 	}
 
 	used := posted(listing("Michelin CrossClimate 2 235/45 R20 100V XL", "120.00"))
@@ -456,19 +452,12 @@ func TestTyreTargets(t *testing.T) {
 		t.Error("a used tyre must not match a new-only target")
 	}
 
-	// Collection-only listings count only inside the pickup radius.
+	// Collection-only listings count from anywhere in the UK, flagged to check.
 	collect := listing("Set of 4 Pirelli Scorpion All Season SF3 235/45 R20", "550.00")
 	collect.Condition = "New" // listing() sets no postage options: collection only
-	if _, ok, why := Evaluate(cfg, set, collect, false, now); ok || why != "collection only, too far or unknown" {
-		t.Errorf("far collection-only set: ok=%v (%s)", ok, why)
-	}
-	collect.NearPickup = true
 	d, ok, why = Evaluate(cfg, set, collect, false, now)
-	if !ok {
-		t.Fatalf("nearby collection-only set should pass: %s", why)
-	}
-	if msg := formatDeal(d, false); !strings.Contains(msg, "collect within 200 mi of TW3") || !strings.Contains(msg, "Postage   collect") {
-		t.Errorf("collection alert text:\n%s", msg)
+	if !ok || !strings.Contains(formatDeal(d, false), "collection or calculated postage") {
+		t.Errorf("collection-only set: ok=%v (%s)", ok, why)
 	}
 }
 

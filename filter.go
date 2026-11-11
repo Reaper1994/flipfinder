@@ -24,7 +24,9 @@ type Deal struct {
 	Auction bool
 	EndsIn  time.Duration
 	Typo    bool
-	// BuyUnder is the target's limit when buying for yourself; 0 for resale deals.
+	// ForMe marks a buy-for-yourself target (buy_under or any_price) rather
+	// than a resale deal. BuyUnder is its limit, 0 when there is none.
+	ForMe    bool
 	BuyUnder float64
 	Flags    []string // human-readable warnings and highlights
 	Verdict  string   // set by the Jev check, if enabled
@@ -108,12 +110,13 @@ func Evaluate(cfg Config, t Target, l Listing, typo bool, now time.Time) (Deal, 
 	if !d.Auction && d.Cost < t.MarketPrice*cfg.SuspiciousBelow {
 		return Deal{}, false, "suspiciously cheap: likely fake, scam or mislisted"
 	}
-	if t.BuyUnder > 0 {
-		// Buying for yourself: the limit is all that matters. Profit becomes the
-		// saving against the typical price, which still ranks the alerts.
-		if d.Cost > t.BuyUnder {
+	if t.BuyUnder > 0 || t.AnyPrice {
+		// Buying for yourself: only your limit (if any) matters. Profit becomes
+		// the saving against the typical price, which still ranks the alerts.
+		if t.BuyUnder > 0 && d.Cost > t.BuyUnder {
 			return Deal{}, false, "over your limit"
 		}
+		d.ForMe = true
 		d.BuyUnder = t.BuyUnder
 		d.Resale = t.MarketPrice
 		d.Profit = t.MarketPrice - d.Cost
