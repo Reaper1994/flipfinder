@@ -27,6 +27,11 @@ on:
         type: boolean
         default: false
 
+# Least privilege: the job only needs to read the code. (The cache steps use
+# the Actions runtime token, not GITHUB_TOKEN.)
+permissions:
+  contents: read
+
 concurrency:
   group: flipfinder
   cancel-in-progress: false
@@ -62,10 +67,10 @@ jobs:
           echo "UK hour $hour, SCAN_HOURS='$spec' → scan=$run"
           echo "run=$run" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: steps.check.outputs.run == 'true'
 
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         if: steps.check.outputs.run == 'true'
         with:
           go-version-file: go.mod
@@ -74,7 +79,7 @@ jobs:
       # Remember which listings were already alerted between runs.
       - name: Restore seen listings
         if: steps.check.outputs.run == 'true'
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: seen.json
           key: seen-${{ github.run_id }}
@@ -98,7 +103,7 @@ jobs:
 
       - name: Save seen listings
         if: always() && steps.check.outputs.run == 'true'
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: seen.json
           key: seen-${{ github.run_id }}

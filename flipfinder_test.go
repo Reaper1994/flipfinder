@@ -205,7 +205,7 @@ func TestPS5TargetKeepsConsolesDropsExtras(t *testing.T) {
 func formatFixture() Deal {
 	return Deal{Target: "PS5 <console>", Rank: 2, Total: 3, Price: 210, Cost: 210, Resale: 290, Profit: 80, ROI: 0.38, Score: 110,
 		Verdict: "✅ looks genuine",
-		Listing: Listing{Title: "PS5 & pad", ItemWebURL: "https://ebay.test/1?a=1&b=2"}}
+		Listing: Listing{Title: "PS5 & pad", ItemWebURL: "https://www.ebay.co.uk/itm/1?a=1&b=2"}}
 }
 
 func TestAdvice(t *testing.T) {
@@ -232,7 +232,7 @@ func TestFormatDealHTML(t *testing.T) {
 	got := formatDeal(formatFixture(), true)
 	for _, want := range []string{
 		"<b>#2/3 · 🟢 Buy · PS5 &lt;console&gt;</b>", "PS5 &amp; pad", "<pre>Price     £210.00\n",
-		"Postage   check", "Score     110", "Advice    Buy</pre>", `href="https://ebay.test/1?a=1&amp;b=2"`,
+		"Postage   check", "Score     110", "Advice    Buy</pre>", `href="https://www.ebay.co.uk/itm/1?a=1&amp;b=2"`,
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q in:\n%s", want, got)
@@ -503,4 +503,26 @@ func (mixedSearcher) Search(_ context.Context, q string, _ SearchOptions) ([]Lis
 		out = append(out, l)
 	}
 	return out, nil
+}
+
+func TestEbayLink(t *testing.T) {
+	cases := map[string]string{
+		"https://www.ebay.co.uk/itm/123?x=1": "https://www.ebay.co.uk/itm/123?x=1",
+		"https://www.ebay.com/itm/1":         "https://www.ebay.com/itm/1",
+		"http://www.ebay.co.uk/itm/1":        "",
+		"javascript:alert(1)":                "",
+		"https://ebay.co.uk.evil.example/x":  "",
+		"https://notebay.co.uk/x":            "",
+		"https://user@www.ebay.co.uk/itm/1":  "",
+		"":                                   "",
+	}
+	for in, want := range cases {
+		if got := ebayLink(in); got != want {
+			t.Errorf("ebayLink(%q) = %q, want %q", in, got, want)
+		}
+	}
+	d := Deal{Target: "PS5", Listing: Listing{Title: "PS5", ItemWebURL: "javascript:alert(1)"}}
+	if msg := formatDeal(d, true); strings.Contains(msg, "javascript") || strings.Contains(msg, "<a ") {
+		t.Errorf("non-eBay link must not be linked:\n%s", msg)
+	}
 }

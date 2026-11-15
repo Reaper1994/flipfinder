@@ -160,10 +160,14 @@ func formatDeal(d Deal, htmlMode bool) string {
 	for _, f := range d.Flags {
 		fmt.Fprintf(&b, "%s\n", esc(f))
 	}
-	if htmlMode {
-		fmt.Fprintf(&b, `<a href="%s">Open on eBay</a>`, html.EscapeString(d.Listing.ItemWebURL))
-	} else {
-		b.WriteString(d.Listing.ItemWebURL)
+	link := ebayLink(d.Listing.ItemWebURL)
+	switch {
+	case link == "":
+		b.WriteString(esc("(no eBay link in the listing)"))
+	case htmlMode:
+		fmt.Fprintf(&b, `<a href="%s">Open on eBay</a>`, html.EscapeString(link))
+	default:
+		b.WriteString(link)
 	}
 	return b.String()
 }
@@ -185,7 +189,10 @@ func formatIndex(deals []Deal, held int, htmlMode bool) string {
 		icon, label := advice(d)
 		name := d.Target
 		if htmlMode {
-			name = fmt.Sprintf(`<a href="%s">%s</a>`, html.EscapeString(d.Listing.ItemWebURL), html.EscapeString(d.Target))
+			name = html.EscapeString(d.Target)
+			if link := ebayLink(d.Listing.ItemWebURL); link != "" {
+				name = fmt.Sprintf(`<a href="%s">%s</a>`, html.EscapeString(link), name)
+			}
 		}
 		value := fmt.Sprintf("~£%.0f profit", d.Profit)
 		switch {
@@ -272,4 +279,21 @@ func versusTypical(d Deal) string {
 		return fmt.Sprintf("save ~£%.0f", d.Profit)
 	}
 	return fmt.Sprintf("~£%.0f above typical", -d.Profit)
+}
+
+// ebayLink returns u if it is an https link to eBay, otherwise "". Listing URLs
+// come from eBay's API, but alerts are clicked on a phone, so only eBay links
+// are ever shown or linked.
+func ebayLink(u string) string {
+	p, err := url.Parse(u)
+	if err != nil || p.Scheme != "https" || p.User != nil {
+		return ""
+	}
+	host := strings.ToLower(p.Hostname())
+	for _, domain := range []string{"ebay.co.uk", "ebay.com"} {
+		if host == domain || strings.HasSuffix(host, "."+domain) {
+			return p.String()
+		}
+	}
+	return ""
 }
